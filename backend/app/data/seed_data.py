@@ -1,0 +1,572 @@
+import os
+import asyncio
+import uuid
+from datetime import date, time, timedelta, timezone, datetime
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from app.core.database import AsyncSessionLocal, engine, Base
+from app.models.specialty import MedicalSpecialty
+from app.models.doctor import Doctor
+from app.models.doctor_availability import DoctorAvailability
+from app.models.user import User
+from app.models.consent import Consent
+from app.models.content import BiomarkerReference, GlossaryTerm
+from app.core.security import get_password_hash
+from app.core.config import settings
+
+SPECIALTIES_DATA = [
+    {
+        "name": "Cardiology",
+        "description": "Specializes in diagnosing and treating diseases of the heart and blood vessels.",
+        "icon_name": "heart-pulse"
+    },
+    {
+        "name": "Endocrinology",
+        "description": "Focuses on hormone imbalances, diabetes, metabolic disorders, and thyroid diseases.",
+        "icon_name": "dna"
+    },
+    {
+        "name": "Hematology",
+        "description": "Deals with blood disorders, anemia, clotting issues, and blood cell abnormalities.",
+        "icon_name": "droplet"
+    },
+    {
+        "name": "Gastroenterology",
+        "description": "Treats disorders of the digestive system, stomach, liver, and intestines.",
+        "icon_name": "activity"
+    },
+    {
+        "name": "Nephrology",
+        "description": "Specializes in kidney care, renal function management, and electrolyte disorders.",
+        "icon_name": "shield"
+    },
+    {
+        "name": "Pulmonology",
+        "description": "Treats respiratory conditions, lungs, asthma, and chronic cough disorders.",
+        "icon_name": "wind"
+    },
+    {
+        "name": "Dermatology",
+        "description": "Specializes in conditions affecting the skin, hair, and nails.",
+        "icon_name": "smile"
+    },
+    {
+        "name": "Neurology",
+        "description": "Treats conditions affecting the brain, spinal cord, and nervous system.",
+        "icon_name": "zap"
+    },
+    {
+        "name": "Orthopedics",
+        "description": "Focuses on the musculoskeletal system, bones, joints, ligaments, and tendons.",
+        "icon_name": "award"
+    },
+    {
+        "name": "General Medicine",
+        "description": "Comprehensive primary care, routine wellness, and holistic health evaluations.",
+        "icon_name": "stethoscope"
+    }
+]
+
+DOCTORS_DATA = [
+    # Top 10 Verified Endocrinologists requested by User
+    {
+        "specialty": "Endocrinology",
+        "email": "contact@drravishahendo.com",
+        "full_name": "Dr. Ravi Shah",
+        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology",
+        "experience_years": 12,
+        "clinic_name": "Dr. Ravi Shah Endocrine Clinic",
+        "address": "Drive-In Road, Bodakdev",
+        "city": "Ahmedabad",
+        "consultation_fee": 800.00,
+        "rating": 4.9,
+        "review_count": 128,
+        "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Consultant Endocrinologist specializing in comprehensive diabetes care, thyroid disorders, and metabolic health."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "moxitshah30@gmail.com",
+        "full_name": "Dr. Moxit Shah",
+        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology (IPGMER, Kolkata)",
+        "experience_years": 10,
+        "clinic_name": "Vishuddha Endocrine Clinic",
+        "address": "Sindhu Bhavan Road, Bodakdev",
+        "city": "Ahmedabad",
+        "consultation_fee": 1000.00,
+        "rating": 4.9,
+        "review_count": 142,
+        "profile_photo_url": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Endocrinologist and metabolism specialist focusing on personalized diabetes therapy, thyroid disease, and adrenal care."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "info@apollohospitals.com",
+        "full_name": "Dr. Ramesh Goyal",
+        "qualification": "MBBS, MD in General Medicine & Therapeutics, DM in Endocrinology (AIIMS, New Delhi)",
+        "experience_years": 22,
+        "clinic_name": "Apollo Hospitals International",
+        "address": "Plot No. 1A, Bhat GIDC Estate",
+        "city": "Ahmedabad",
+        "consultation_fee": 1200.00,
+        "rating": 4.9,
+        "review_count": 210,
+        "profile_photo_url": "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Senior Consultant Endocrinologist & Diabetologist with extensive clinical and academic background from AIIMS New Delhi."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "info@drshalinendo.com",
+        "full_name": "Dr. Shalin J. Shah",
+        "qualification": "MBBS, MD in Internal Medicine, DNB in Endocrinology (Medanta Institute, Delhi)",
+        "experience_years": 14,
+        "clinic_name": "Gujarat Diabetes and Endocrine Foundation",
+        "address": "Near AEC Char Rasta, Naranpura / Ghatlodia",
+        "city": "Ahmedabad",
+        "consultation_fee": 900.00,
+        "rating": 4.8,
+        "review_count": 115,
+        "profile_photo_url": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Endocrinology consultant specializing in adult and pediatric growth disorders, metabolic syndrome, and advanced thyroid disorders."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "info@sanidhyaclinic.com",
+        "full_name": "Dr. Samir Saini",
+        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology",
+        "experience_years": 15,
+        "clinic_name": "Sanidhya Clinic",
+        "address": "Race Course Road",
+        "city": "Vadodara",
+        "consultation_fee": 850.00,
+        "rating": 4.9,
+        "review_count": 98,
+        "profile_photo_url": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Endocrinologist specializing in reproductive endocrinology, metabolic health, and hormone optimization."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "info@prathamendocare.com",
+        "full_name": "Dr. Pradip P. Dalwadi",
+        "qualification": "MBBS (Pramukh Swami Medical College), MD in Internal Medicine (NHLMMC), DM in Endocrinology (BYL Nair Hospital, Mumbai - Gold Medalist)",
+        "experience_years": 13,
+        "clinic_name": "Pratham Endocare",
+        "address": "Majura Gate / Ring Road",
+        "city": "Surat",
+        "consultation_fee": 950.00,
+        "rating": 4.9,
+        "review_count": 135,
+        "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Gold Medalist Endocrinologist focusing on clinical diabetology, metabolic bone disease, and endocrine disorders."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "appointments@healthplix.com",
+        "full_name": "Dr. Shruti Khare-Aterkar",
+        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology",
+        "experience_years": 11,
+        "clinic_name": "Healthplix Endocrine Care",
+        "address": "Motera / Chandkheda",
+        "city": "Ahmedabad",
+        "consultation_fee": 850.00,
+        "rating": 4.8,
+        "review_count": 92,
+        "profile_photo_url": "https://images.unsplash.com/photo-1594824813570-588267b93ef2?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Consultant Endocrinologist specializing in thyroid disorders, PCOS, female metabolic health, and diabetes."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "info@abplushospital.com",
+        "full_name": "Dr. Om J. Lakhani",
+        "qualification": "MBBS, MD in General Medicine, DNB in Endocrinology & Diabetes",
+        "experience_years": 12,
+        "clinic_name": "AB Plus Hospital",
+        "address": "Navrangpura, Gujarat University Area",
+        "city": "Ahmedabad",
+        "consultation_fee": 1000.00,
+        "rating": 4.9,
+        "review_count": 160,
+        "profile_photo_url": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Consultant Endocrinologist specializing in pituitary diseases, adrenal disorders, transgender hormone therapy, and diabetes."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "info@bapshospital.org",
+        "full_name": "Dr. Mitali Desai",
+        "qualification": "MD in Internal Medicine (BJMC, Ahmedabad), DrNB in Endocrinology (Sir Ganga Ram Hospital, New Delhi - Gold Medalist)",
+        "experience_years": 10,
+        "clinic_name": "BAPS Pramukh Swami Hospital",
+        "address": "Shahibaug",
+        "city": "Ahmedabad",
+        "consultation_fee": 900.00,
+        "rating": 4.9,
+        "review_count": 105,
+        "profile_photo_url": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Gold Medalist Endocrinologist specializing in neuroendocrinology, gestational diabetes, and complex endocrine pathologies."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "info@shalby.in",
+        "full_name": "Dr. Manoj Kumar Agrawal",
+        "qualification": "MBBS, MD in Pediatrics, Certified Fellow of ESPE",
+        "experience_years": 16,
+        "clinic_name": "Shalby Multi-Specialty Hospitals",
+        "address": "Opp. Karnavati Club, SG Highway",
+        "city": "Ahmedabad",
+        "consultation_fee": 1100.00,
+        "rating": 4.8,
+        "review_count": 140,
+        "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Hindi", "Gujarati"],
+        "bio": "Certified pediatric and adolescent endocrinology specialist managing juvenile diabetes, puberty disorders, and metabolic health."
+    },
+    # Fixture doctors retained for automated integration testing
+    {
+        "specialty": "Cardiology",
+        "email": "doctor.jenkins@vitalens.health",
+        "full_name": "Dr. Sarah Jenkins, MD, FACC",
+        "qualification": "MD (Cardiology), Harvard Medical School",
+        "experience_years": 14,
+        "clinic_name": "Apex Heart & Vascular Institute",
+        "address": "742 Evergreen Terrace, Suite 400",
+        "city": "Ahmedabad",
+        "consultation_fee": 95.00,
+        "rating": 4.9,
+        "review_count": 128,
+        "profile_photo_url": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Spanish"],
+        "bio": "Dr. Jenkins is a board-certified cardiologist specializing in preventive cardiology, lipid management, and non-invasive cardiovascular imaging."
+    },
+    {
+        "specialty": "Cardiology",
+        "email": "doctor.vance@vitalens.health",
+        "full_name": "Dr. Robert Vance, MD",
+        "qualification": "MBBS, MD (Cardiovascular Diseases)",
+        "experience_years": 18,
+        "clinic_name": "Vance Cardiovascular Care Center",
+        "address": "120 Medical Arts Pavilion, 3rd Floor",
+        "city": "Ahmedabad",
+        "consultation_fee": 110.00,
+        "rating": 4.8,
+        "review_count": 94,
+        "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English"],
+        "bio": "Senior interventional cardiologist with nearly two decades of clinical experience in managing coronary health and rhythm disorders."
+    },
+    {
+        "specialty": "Endocrinology",
+        "email": "doctor.rostova@vitalens.health",
+        "full_name": "Dr. Elena Rostova, MD",
+        "qualification": "MD (Endocrinology & Diabetes)",
+        "experience_years": 11,
+        "clinic_name": "Metabolic & Thyroid Wellness Clinic",
+        "address": "88 Science Blvd, Suite 210",
+        "city": "Ahmedabad",
+        "consultation_fee": 85.00,
+        "rating": 4.9,
+        "review_count": 156,
+        "profile_photo_url": "https://images.unsplash.com/photo-1594824813570-588267b93ef2?auto=format&fit=crop&q=80&w=300",
+        "languages": ["English", "Russian"],
+        "bio": "Specialist in metabolic syndromes, personalized diabetes care, thyroid optimization, and hormonal regulation."
+    }
+]
+
+SLOT_TIMES = [
+    time(9, 0), time(9, 30), time(10, 0), time(10, 30),
+    time(11, 0), time(11, 30), time(14, 0), time(14, 30),
+    time(15, 0), time(15, 30), time(16, 0), time(16, 30)
+]
+
+BIOMARKER_SEED = [
+    {"test_name": "Hemoglobin", "canonical_name": "Hemoglobin (Hb)", "category": "Complete Blood Count", "default_unit": "g/dL", "ref_min": 12.0, "ref_max": 17.5, "critical_low": 7.0, "critical_high": 20.0},
+    {"test_name": "White Blood Cell Count", "canonical_name": "White Blood Cell Count (WBC)", "category": "Complete Blood Count", "default_unit": "cells/mcL", "ref_min": 4000, "ref_max": 11000, "critical_low": 2000, "critical_high": 30000},
+    {"test_name": "Red Blood Cell Count", "canonical_name": "Red Blood Cell Count (RBC)", "category": "Complete Blood Count", "default_unit": "million/mcL", "ref_min": 4.2, "ref_max": 5.9, "critical_low": 2.5, "critical_high": 7.0},
+    {"test_name": "Platelets", "canonical_name": "Platelet Count", "category": "Complete Blood Count", "default_unit": "cells/mcL", "ref_min": 150000, "ref_max": 450000, "critical_low": 50000, "critical_high": 1000000},
+    {"test_name": "Hematocrit", "canonical_name": "Hematocrit (PCV)", "category": "Complete Blood Count", "default_unit": "%", "ref_min": 36.0, "ref_max": 50.0, "critical_low": 20.0, "critical_high": 60.0},
+    {"test_name": "Fasting Blood Glucose", "canonical_name": "Fasting Blood Glucose", "category": "Diabetes & Metabolism", "default_unit": "mg/dL", "ref_min": 70.0, "ref_max": 99.0, "critical_low": 50.0, "critical_high": 350.0},
+    {"test_name": "HbA1c", "canonical_name": "Glycated Hemoglobin (HbA1c)", "category": "Diabetes & Metabolism", "default_unit": "%", "ref_min": 4.0, "ref_max": 5.6, "critical_low": 3.5, "critical_high": 14.0},
+    {"test_name": "Total Cholesterol", "canonical_name": "Total Cholesterol", "category": "Lipid Profile", "default_unit": "mg/dL", "ref_min": 125.0, "ref_max": 200.0, "critical_low": 80.0, "critical_high": 400.0},
+    {"test_name": "LDL Cholesterol", "canonical_name": "LDL Cholesterol", "category": "Lipid Profile", "default_unit": "mg/dL", "ref_min": 0.0, "ref_max": 100.0, "critical_low": 0.0, "critical_high": 250.0},
+    {"test_name": "HDL Cholesterol", "canonical_name": "HDL Cholesterol", "category": "Lipid Profile", "default_unit": "mg/dL", "ref_min": 40.0, "ref_max": 60.0, "critical_low": 20.0, "critical_high": 120.0},
+    {"test_name": "Triglycerides", "canonical_name": "Triglycerides", "category": "Lipid Profile", "default_unit": "mg/dL", "ref_min": 0.0, "ref_max": 150.0, "critical_low": 0.0, "critical_high": 500.0},
+    {"test_name": "Serum Creatinine", "canonical_name": "Serum Creatinine", "category": "Renal Panel", "default_unit": "mg/dL", "ref_min": 0.6, "ref_max": 1.2, "critical_low": 0.2, "critical_high": 5.0},
+    {"test_name": "BUN", "canonical_name": "Blood Urea Nitrogen (BUN)", "category": "Renal Panel", "default_unit": "mg/dL", "ref_min": 7.0, "ref_max": 20.0, "critical_low": 2.0, "critical_high": 80.0},
+    {"test_name": "ALT", "canonical_name": "Alanine Aminotransferase (ALT)", "category": "Liver Function", "default_unit": "U/L", "ref_min": 7.0, "ref_max": 56.0, "critical_low": 0.0, "critical_high": 500.0},
+    {"test_name": "AST", "canonical_name": "Aspartate Aminotransferase (AST)", "category": "Liver Function", "default_unit": "U/L", "ref_min": 10.0, "ref_max": 40.0, "critical_low": 0.0, "critical_high": 500.0},
+    {"test_name": "TSH", "canonical_name": "Thyroid Stimulating Hormone (TSH)", "category": "Thyroid Panel", "default_unit": "uIU/mL", "ref_min": 0.4, "ref_max": 4.0, "critical_low": 0.05, "critical_high": 20.0},
+    {"test_name": "Free T4", "canonical_name": "Free T4", "category": "Thyroid Panel", "default_unit": "ng/dL", "ref_min": 0.8, "ref_max": 1.8, "critical_low": 0.3, "critical_high": 3.5},
+    {"test_name": "Ferritin", "canonical_name": "Ferritin", "category": "Iron Studies", "default_unit": "ng/mL", "ref_min": 15.0, "ref_max": 150.0, "critical_low": 5.0, "critical_high": 1000.0},
+    {"test_name": "Iron", "canonical_name": "Iron", "category": "Iron Studies", "default_unit": "ug/dL", "ref_min": 50.0, "ref_max": 170.0, "critical_low": 20.0, "critical_high": 300.0},
+    {"test_name": "Total Bilirubin", "canonical_name": "Bilirubin, Total", "category": "Liver Function", "default_unit": "mg/dL", "ref_min": 0.1, "ref_max": 1.2, "critical_low": 0.0, "critical_high": 15.0},
+]
+
+GLOSSARY_SEED = [
+    {"term": "Hemoglobin", "definition": "A specialized iron-rich protein in red blood cells that transports oxygen from the lungs to body tissues."},
+    {"term": "WBC", "definition": "White blood cells that defend the body against infections, allergic reactions, and cellular stress."},
+    {"term": "Platelets", "definition": "Cell fragments circulating in blood that initiate clotting to stop bleeding when vessels are damaged."},
+    {"term": "Fasting Blood Glucose", "definition": "The concentration of sugar circulating in the bloodstream following an overnight period of fasting."},
+    {"term": "HbA1c", "definition": "An established marker reflecting average blood sugar control over the past 60 to 90 days."},
+    {"term": "Total Cholesterol", "definition": "The total amount of cholesterol circulating in the blood, comprising HDL, LDL, and triglycerides."},
+    {"term": "LDL", "definition": "Low-Density Lipoprotein, often called 'bad cholesterol' because excessive levels can build up in arterial walls."},
+    {"term": "HDL", "definition": "High-Density Lipoprotein, termed 'good cholesterol' as it helps transport excess cholesterol back to the liver."},
+    {"term": "Triglycerides", "definition": "A prevalent type of fat in your blood stored in fat cells and used for cellular energy between meals."},
+    {"term": "Serum Creatinine", "definition": "A standard waste product of muscle metabolism filtered out continuously by healthy kidneys."},
+    {"term": "BUN", "definition": "Blood Urea Nitrogen, a waste byproduct formed in the liver when proteins break down and cleared by the kidneys."},
+    {"term": "eGFR", "definition": "Estimated Glomerular Filtration Rate, calculating how efficiently your kidneys are filtering waste products."},
+    {"term": "ALT", "definition": "An enzyme primarily located inside liver cells that enters the bloodstream when liver cells experience stress or irritation."},
+    {"term": "AST", "definition": "An enzyme found in liver, heart, and muscle tissue that can increase when these tissues undergo stress."},
+    {"term": "TSH", "definition": "Thyroid Stimulating Hormone produced by the pituitary gland to control metabolic rate and thyroid activity."},
+    {"term": "Free T4", "definition": "Free Thyroxine, the active circulating form of thyroid hormone regulating metabolism, energy, and body temperature."},
+    {"term": "Ferritin", "definition": "A cellular protein that stores iron and releases it in a controlled fashion; the most reliable indicator of total body iron reserves."},
+    {"term": "Iron", "definition": "An essential mineral required for producing hemoglobin, transporting oxygen throughout the body, and maintaining cellular energy."},
+    {"term": "Bilirubin", "definition": "A yellowish compound formed during the normal breakdown of red blood cells, processed and excreted by the liver through bile."}
+]
+
+from app.core.db_sync import sync_sqlite_schema
+
+async def seed_database(custom_engine=None, custom_session_factory=None, include_doctors: Optional[bool] = None):
+    """Initializes tables and seeds initial specialties, admin/demo users, and clinical content."""
+    target_engine = custom_engine or engine
+    target_session_factory = custom_session_factory or AsyncSessionLocal
+
+    if include_doctors is None:
+        include_doctors = os.getenv("SEED_DOCTORS", "false").lower() == "true"
+
+
+    if "sqlite" in settings.DATABASE_URL:
+        sync_sqlite_schema()
+    async with target_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    async with target_session_factory() as session:
+        # 1. Seed Demo Patient User
+        user_q = select(User).where(User.email == "demo@healthapp.com")
+        user_res = await session.execute(user_q)
+        demo_user = user_res.scalars().first()
+        if not demo_user:
+            demo_user = User(
+                email="demo@healthapp.com",
+                hashed_password=get_password_hash("password123"),
+                role="PATIENT",
+                full_name="Alex Mercer",
+                phone="+1 (555) 234-5678",
+                date_of_birth=date(1996, 5, 14),
+                biological_sex="Male",
+                blood_group="O+",
+                emergency_contact="Jane Mercer: +1 (555) 987-6543"
+            )
+            session.add(demo_user)
+            await session.commit()
+            await session.refresh(demo_user)
+            
+            # Seed consents
+            for c_type in ["REPORT_ANALYSIS", "AI_PROCESSING", "DOCTOR_DATA_ACCESS", "NOTIFICATIONS", "MARKETING"]:
+                session.add(Consent(user_id=demo_user.id, consent_type=c_type, granted=True))
+            await session.commit()
+            print("[OK] Seeded demo patient user: demo@healthapp.com / password123")
+
+
+        # 2. Seed Admin User
+        admin_q = select(User).where(User.email == "admin@vitalens.health")
+        admin_res = await session.execute(admin_q)
+        if not admin_res.scalars().first():
+            admin_user = User(
+                email="admin@vitalens.health",
+                hashed_password=get_password_hash("admin123"),
+                role="ADMIN",
+                full_name="VitaLens System Administrator",
+                phone="+1 (555) 000-0001",
+                is_active=True
+            )
+            session.add(admin_user)
+            await session.commit()
+            print("[OK] Seeded admin user: admin@vitalens.health / admin123")
+
+        # 2b. Seed Secondary Admin User (admin@healthapp.com)
+        admin2_q = select(User).where(User.email == "admin@healthapp.com")
+        admin2_res = await session.execute(admin2_q)
+        if not admin2_res.scalars().first():
+            admin2_user = User(
+                email="admin@healthapp.com",
+                hashed_password=get_password_hash("admin123"),
+                role="ADMIN",
+                full_name="Admin User",
+                phone="+1 (555) 000-0003",
+                is_active=True
+            )
+            session.add(admin2_user)
+            await session.commit()
+            print("[OK] Seeded admin user: admin@healthapp.com / admin123")
+
+        # 2c. Seed Support Staff User
+        staff_q = select(User).where(User.email == "staff@vitalens.health")
+        staff_res = await session.execute(staff_q)
+        staff_user = staff_res.scalars().first()
+        if not staff_user:
+            staff_user = User(
+                email="staff@vitalens.health",
+                hashed_password=get_password_hash("staff123"),
+                role="SUPPORT_STAFF",
+                full_name="VitaLens Support Staff",
+                phone="+1 (555) 000-0002",
+                is_active=True
+            )
+            session.add(staff_user)
+            await session.commit()
+            print("[OK] Seeded support staff user: staff@vitalens.health / staff123")
+
+        # 3. Seed Specialties
+        specialty_map = {}
+        for s_data in SPECIALTIES_DATA:
+            q = select(MedicalSpecialty).where(MedicalSpecialty.name == s_data["name"])
+            res = await session.execute(q)
+            spec = res.scalars().first()
+            if not spec:
+                spec = MedicalSpecialty(
+                    name=s_data["name"],
+                    description=s_data["description"],
+                    icon_name=s_data["icon_name"]
+                )
+                session.add(spec)
+                await session.commit()
+                await session.refresh(spec)
+            specialty_map[spec.name] = spec.id
+
+        # 4. Seed Doctors and Linked Doctor User Accounts (opt-in only)
+        if include_doctors:
+            for doc_data in DOCTORS_DATA:
+                spec_id = specialty_map.get(doc_data["specialty"])
+                if not spec_id:
+                    continue
+
+                # Check or create doctor user login account
+                doc_user_q = select(User).where(User.email == doc_data["email"])
+                doc_user_res = await session.execute(doc_user_q)
+                doc_user = doc_user_res.scalars().first()
+                if not doc_user:
+                    doc_user = User(
+                        email=doc_data["email"],
+                        hashed_password=get_password_hash("doctor123"),
+                        role="DOCTOR",
+                        full_name=doc_data["full_name"],
+                        is_active=True
+                    )
+                    session.add(doc_user)
+                    await session.commit()
+                    await session.refresh(doc_user)
+
+                doc_q = select(Doctor).where(Doctor.full_name == doc_data["full_name"])
+                doc_res = await session.execute(doc_q)
+                doc = doc_res.scalars().first()
+                
+                if not doc:
+                    doc = Doctor(
+                        user_id=doc_user.id,
+                        specialty_id=spec_id,
+                        full_name=doc_data["full_name"],
+                        qualification=doc_data["qualification"],
+                        experience_years=doc_data["experience_years"],
+                        clinic_name=doc_data["clinic_name"],
+                        address=doc_data["address"],
+                        city=doc_data["city"],
+                        consultation_fee=doc_data["consultation_fee"],
+                        rating=doc_data["rating"],
+                        review_count=doc_data["review_count"],
+                        profile_photo_url=doc_data["profile_photo_url"],
+                        languages=doc_data["languages"],
+                        bio=doc_data["bio"],
+                        verification_status="VERIFIED",
+                        is_active=True
+                    )
+                    session.add(doc)
+                    await session.commit()
+                    await session.refresh(doc)
+                else:
+                    if not doc.user_id:
+                        doc.user_id = doc_user.id
+                    doc.specialty_id = spec_id
+                    doc.qualification = doc_data["qualification"]
+                    doc.experience_years = doc_data["experience_years"]
+                    doc.clinic_name = doc_data["clinic_name"]
+                    doc.address = doc_data["address"]
+                    doc.city = doc_data["city"]
+                    doc.consultation_fee = doc_data["consultation_fee"]
+                    doc.rating = doc_data["rating"]
+                    doc.review_count = doc_data["review_count"]
+                    doc.profile_photo_url = doc_data["profile_photo_url"]
+                    doc.languages = doc_data["languages"]
+                    doc.bio = doc_data["bio"]
+                    doc.verification_status = "VERIFIED"
+                    doc.is_active = True
+                    await session.commit()
+
+                # Check working hours count
+                from app.models.doctor_schedule import DoctorWorkingHours
+                wh_cnt_q = select(DoctorWorkingHours).where(DoctorWorkingHours.doctor_id == doc.id)
+                wh_res = await session.execute(wh_cnt_q)
+                if len(wh_res.scalars().all()) == 0:
+                    for day_idx in range(6):  # Mon-Sat
+                        wh_item = DoctorWorkingHours(
+                            doctor_id=doc.id,
+                            day_of_week=day_idx,
+                            start_time=time(9, 0),
+                            end_time=time(17, 0),
+                            slot_duration_minutes=30,
+                            is_active=True
+                        )
+                        session.add(wh_item)
+                    await session.commit()
+
+                # Check slots count
+                slots_cnt_q = select(DoctorAvailability).where(DoctorAvailability.doctor_id == doc.id)
+                slots_res = await session.execute(slots_cnt_q)
+                if len(slots_res.scalars().all()) == 0:
+                    today = date.today()
+                    for day_offset in range(1, 15):
+                        slot_date = today + timedelta(days=day_offset)
+                        if slot_date.weekday() == 6:
+                            continue
+                        for t in SLOT_TIMES:
+                            end_t = time(t.hour, (t.minute + 30) % 60) if t.minute == 0 else time(t.hour + 1, 0)
+                            slot = DoctorAvailability(
+                                doctor_id=doc.id,
+                                available_date=slot_date,
+                                start_time=t,
+                                end_time=end_t,
+                                slot_duration_minutes=30,
+                                is_booked=False
+                            )
+                            session.add(slot)
+                    await session.commit()
+
+
+        # 5. Seed Clinical Content Reference Thresholds
+        for b_seed in BIOMARKER_SEED:
+            b_q = select(BiomarkerReference).where(BiomarkerReference.test_name == b_seed["test_name"])
+            b_res = await session.execute(b_q)
+            if not b_res.scalars().first():
+                session.add(BiomarkerReference(**b_seed))
+        await session.commit()
+
+        # 6. Seed Glossary
+        for g_seed in GLOSSARY_SEED:
+            g_q = select(GlossaryTerm).where(GlossaryTerm.term == g_seed["term"])
+            g_res = await session.execute(g_q)
+            if not g_res.scalars().first():
+                session.add(GlossaryTerm(**g_seed, reviewed_by="Clinical Reference Board", reviewed_at=datetime.now(timezone.utc)))
+        await session.commit()
+
+        doc_msg = f"{len(DOCTORS_DATA)} verified doctors, " if include_doctors else ""
+        print(f"[OK] Database initialized with {doc_msg}clinical thresholds, admin accounts, and glossary.")
+
+if __name__ == "__main__":
+    asyncio.run(seed_database())
