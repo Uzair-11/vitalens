@@ -59,22 +59,28 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
     const fullUrl = `${originalRequest?.baseURL || ''}${originalRequest?.url || ''}`;
 
-    // Detailed diagnostic logging
-    console.error(
-      `❌ [API ERR] ${originalRequest?.method?.toUpperCase()} ${fullUrl} | ` +
-      `Status: ${error.response?.status || 'No Response'} | ` +
-      `Message: ${error.message} | Code: ${error.code || 'UNKNOWN'}`
-    );
+    // If this is an expired token (401) that can be refreshed, handle cleanly without noisy error logs
+    const isRetriable401 = error.response?.status === 401 && !originalRequest._retry && !!useAuthStore.getState().refreshToken && !originalRequest.url?.includes('/auth/login') && !originalRequest.url?.includes('/auth/refresh');
 
-    if (error.response?.data) {
-      console.error('   [API ERR Response Body]:', JSON.stringify(error.response.data));
-    }
-
-    if (error.message === 'Network Error') {
+    if (!isRetriable401) {
       console.error(
-        `   [API Network Diagnostic]: Failed to reach backend at "${originalRequest?.baseURL}". ` +
-        `Verify your phone is on the same Wi-Fi and that the backend IP (${API_CONFIG.BASE_URL}) is reachable.`
+        `❌ [API ERR] ${originalRequest?.method?.toUpperCase()} ${fullUrl} | ` +
+        `Status: ${error.response?.status || 'No Response'} | ` +
+        `Message: ${error.message} | Code: ${error.code || 'UNKNOWN'}`
       );
+
+      if (error.response?.data) {
+        console.error('   [API ERR Response Body]:', JSON.stringify(error.response.data));
+      }
+
+      if (error.message === 'Network Error') {
+        console.error(
+          `   [API Network Diagnostic]: Failed to reach backend at "${originalRequest?.baseURL}". ` +
+          `Verify your phone is on the same Wi-Fi and that the backend IP (${API_CONFIG.BASE_URL}) is reachable.`
+        );
+      }
+    } else {
+      console.log(`ℹ️ [API] Access token expired (401) for ${originalRequest.url}. Seamlessly refreshing session...`);
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
