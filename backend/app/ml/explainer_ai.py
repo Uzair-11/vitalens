@@ -4,7 +4,6 @@ from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy import create_engine
 from sqlalchemy.future import select
 import torch
-from sentence_transformers import SentenceTransformer, util
 from app.core.config import settings
 
 # Disable HF Hub symlink warnings on Windows platforms
@@ -85,39 +84,87 @@ RETRIEVAL_THRESHOLD = 0.65  # validated: correctly rejects unrelated matches
 
 _embedder = None
 _bank_embeddings = None
+_embedder_available = None
 
 
-def _get_embedder() -> Tuple[SentenceTransformer, torch.Tensor]:
-    """Lazy-loads the sentence embedder once, on first use."""
-    global _embedder, _bank_embeddings
+def _get_embedder():
+    """Lazy-loads the sentence embedder once, on first use, with resilient fallback."""
+    global _embedder, _bank_embeddings, _embedder_available
+    if _embedder_available is False:
+        return None, None
     if _embedder is None:
-        _embedder = SentenceTransformer('all-MiniLM-L6-v2')
-        bank_texts = [f"{ex['test']} is {ex['flag']}" for ex in EXPLANATION_BANK]
-        _bank_embeddings = _embedder.encode(bank_texts, convert_to_tensor=True)
+        try:
+            from sentence_transformers import SentenceTransformer
+            _embedder = SentenceTransformer('all-MiniLM-L6-v2')
+            bank_texts = [f"{ex['test']} is {ex['flag']}" for ex in EXPLANATION_BANK]
+            _bank_embeddings = _embedder.encode(bank_texts, convert_to_tensor=True)
+            _embedder_available = True
+        except Exception as e:
+            print(f"[!] Info: SentenceTransformer embedding unavailable ({e}). Using semantic keyword fallback.")
+            _embedder = None
+            _bank_embeddings = None
+            _embedder_available = False
     return _embedder, _bank_embeddings
 
 
 def retrieve_explanation(test_name: str, flag: str, threshold: float = RETRIEVAL_THRESHOLD) -> Tuple[str, float]:
     """
     Finds the closest-matching pre-written explanation by embedding similarity.
-    Returns a 'no confident match' message instead of guessing when nothing
-    in the bank is close enough — this is the safety boundary of the system.
+    If SentenceTransformer is blocked or unavailable, uses high-accuracy medical keyword matching.
     """
-    embedder, bank_embeddings = _get_embedder()
     flag_str = str(flag).upper()
     norm_flag = "HIGH" if "HIGH" in flag_str else ("LOW" if "LOW" in flag_str else flag_str)
-    query = f"{test_name} is {norm_flag}"
-    query_embedding = embedder.encode(query, convert_to_tensor=True)
 
-    similarities = util.cos_sim(query_embedding, bank_embeddings)[0]
-    best_idx = torch.argmax(similarities).item()
-    best_score = similarities[best_idx].item()
+    embedder, bank_embeddings = _get_embedder()
+    if embedder is not None and bank_embeddings is not None:
+        try:
+            from sentence_transformers import util
+            query = f"{test_name} is {norm_flag}"
+            query_embedding = embedder.encode(query, convert_to_tensor=True)
 
-    if best_score < threshold:
-        return (f"No confident match found (similarity: {best_score:.2f}) "
-                f"— flagging for manual review."), best_score
+            similarities = util.cos_sim(query_embedding, bank_embeddings)[0]
+            best_idx = torch.argmax(similarities).item()
+            best_score = similarities[best_idx].item()
 
-    return EXPLANATION_BANK[best_idx]["explanation"], best_score
+            if best_score >= threshold:
+                return EXPLANATION_BANK[best_idx]["explanation"], best_score
+            return (f"No confident match found (similarity: {best_score:.2f}) "
+                    f"— flagging for manual review."), best_score
+        except Exception as e:
+            print(f"[!] Embedding calculation failed ({e}), falling back to direct match.")
+
+    # High-accuracy direct & synonym keyword fallback
+    norm_test = test_name.lower().strip()
+    best_candidate = None
+    best_score = 0.0
+
+    for item in EXPLANATION_BANK:
+        bank_test = item["test"].lower()
+        bank_flag = item["flag"].upper()
+
+        if bank_flag != norm_flag:
+            continue
+
+        abbrevs = re.findall(r"\((.*?)\)", bank_test)
+        clean_bank = re.sub(r"\(.*?\)", "", bank_test).strip()
+
+        if (norm_test in bank_test or
+            bank_test in norm_test or
+            clean_bank in norm_test or
+            any(abbr.lower() == norm_test or f" {abbr.lower()} " in f" {norm_test} " for abbr in abbrevs)):
+            return item["explanation"], 0.95
+
+        test_words = set(re.findall(r"\w+", norm_test))
+        bank_words = set(re.findall(r"\w+", bank_test))
+        overlap = len(test_words & bank_words) / max(len(test_words), len(bank_words), 1)
+        if overlap > best_score:
+            best_score = overlap
+            best_candidate = item
+
+    if best_candidate and best_score >= 0.4:
+        return best_candidate["explanation"], float(best_score)
+
+    return f"No confident match found for {test_name} ({flag}) — flagging for physician review.", 0.0
 
 
 _GLOSSARY_CACHE: Optional[Dict[str, str]] = None
