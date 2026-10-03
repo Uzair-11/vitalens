@@ -18,11 +18,13 @@ export const BiomarkerCard: React.FC<BiomarkerCardProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(initiallyExpanded);
 
-  const flag = biomarker.flag?.toUpperCase() || 'NORMAL';
-  const isHigh = flag === 'HIGH';
-  const isLow = flag === 'LOW';
-  const isCritical = flag === 'CRITICAL' || flag === 'ABNORMAL' || flag === 'URGENT';
-  const isNormal = flag === 'NORMAL';
+  const rawFlag = (biomarker.flag || 'NORMAL').toUpperCase().trim();
+  const isCriticalHigh = rawFlag === 'CRITICAL_HIGH' || rawFlag === 'CRITICAL HIGH';
+  const isCriticalLow = rawFlag === 'CRITICAL_LOW' || rawFlag === 'CRITICAL LOW';
+  const isCritical = isCriticalHigh || isCriticalLow || rawFlag === 'CRITICAL' || rawFlag === 'ABNORMAL' || rawFlag === 'URGENT';
+  const isHigh = rawFlag === 'HIGH' || isCriticalHigh;
+  const isLow = rawFlag === 'LOW' || isCriticalLow;
+  const isNormal = rawFlag === 'NORMAL';
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -31,41 +33,63 @@ export const BiomarkerCard: React.FC<BiomarkerCardProps> = ({
 
   const getStatusColor = () => {
     if (isNormal) return COLORS.normal;
+    if (isCritical) return COLORS.urgent;
     if (isLow || isHigh) return COLORS.attention;
     return COLORS.urgent;
   };
 
   const getStatusBg = () => {
     if (isNormal) return COLORS.normalLight;
+    if (isCritical) return COLORS.urgentLight;
     if (isLow || isHigh) return COLORS.attentionLight;
     return COLORS.urgentLight;
   };
 
   const getStatusBorder = () => {
     if (isNormal) return '#BEE0D0';
+    if (isCritical) return '#F4C5BF';
     if (isLow || isHigh) return '#F7E2B5';
     return '#F4C5BF';
   };
 
   const getStatusLabel = () => {
     if (isNormal) return 'NORMAL';
-    if (isLow) return 'LOW';
-    if (isHigh) return 'HIGH';
+    if (isCriticalHigh) return 'CRITICALLY HIGH';
+    if (isCriticalLow) return 'CRITICALLY LOW';
     if (isCritical) return 'ATTENTION NEEDED';
-    return flag;
+    if (isHigh) return 'HIGH';
+    if (isLow) return 'LOW';
+    return rawFlag.replace('_', ' ');
   };
 
   const getExplanation = () => {
     if (biomarker.clinical_interpretation) {
       return biomarker.clinical_interpretation;
     }
+    const valDisplay = biomarker.value_numeric !== null && biomarker.value_numeric !== undefined
+      ? `${biomarker.value_numeric}`
+      : (biomarker.value_text || '');
+    const unitDisplay = biomarker.unit ? ` ${biomarker.unit}` : '';
+    const fullVal = `${valDisplay}${unitDisplay}`.trim();
+
+    const refRangeDisplay = (biomarker.reference_min !== undefined && biomarker.reference_min !== null &&
+      biomarker.reference_max !== undefined && biomarker.reference_max !== null)
+      ? `${biomarker.reference_min} – ${biomarker.reference_max}${unitDisplay}`
+      : (biomarker.reference_text || 'the standard healthy range');
+
+    if (isCriticalHigh) {
+      return `Your ${biomarker.test_name} result (${fullVal}) is significantly elevated above the expected healthy limit (${refRangeDisplay}). A critically high reading requires prompt attention and discussion with a healthcare provider.`;
+    }
+    if (isCriticalLow) {
+      return `Your ${biomarker.test_name} result (${fullVal}) is significantly lower than the minimum safe range (${refRangeDisplay}). A critically low reading requires prompt clinical evaluation.`;
+    }
+    if (isHigh) {
+      return `Your ${biomarker.test_name} result (${fullVal}) is above the reference range shown on your report (${refRangeDisplay}).`;
+    }
     if (isLow) {
-      return `Your ${biomarker.test_name} result (${biomarker.value_numeric ?? biomarker.value_text} ${biomarker.unit || ''}) is below the reference range shown on your report (${biomarker.reference_min} – ${biomarker.reference_max} ${biomarker.unit || ''}).`;
+      return `Your ${biomarker.test_name} result (${fullVal}) is below the reference range shown on your report (${refRangeDisplay}).`;
     }
-    if (isHigh || isCritical) {
-      return `Your ${biomarker.test_name} result (${biomarker.value_numeric ?? biomarker.value_text} ${biomarker.unit || ''}) is above the reference range shown on your report (${biomarker.reference_min} – ${biomarker.reference_max} ${biomarker.unit || ''}).`;
-    }
-    return `Your ${biomarker.test_name} is within the normal healthy reference range (${biomarker.reference_min ?? ''} – ${biomarker.reference_max ?? ''} ${biomarker.unit || ''}).`;
+    return `Your ${biomarker.test_name} (${fullVal}) is within the normal healthy reference range (${refRangeDisplay}).`;
   };
 
   return (

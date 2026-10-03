@@ -16,13 +16,13 @@ def invalidate_biomarker_cache():
     _BIOMARKER_CACHE = None
 
 SYNONYM_MAP = {
-    "glucose": ["sugar", "blood sugar", "fasting blood sugar", "fbs", "glucose fasting", "sugar fasting"],
+    "glucose": ["sugar", "blood sugar", "fasting blood sugar", "fbs", "glucose fasting", "glucose, fasting", "fasting glucose", "sugar fasting"],
     "hemoglobin": ["hb", "hgb", "total hemoglobin"],
     "white blood cell": ["wbc", "tlc", "total leucocyte count", "leukocytes", "white blood cell count"],
     "platelet": ["plt", "thrombocytes", "platelet count", "platelets"],
     "hematocrit": ["pcv", "packed cell volume", "hct"],
-    "cholesterol": ["total cholesterol", "serum cholesterol"],
-    "creatinine": ["serum creatinine", "sr creatinine"],
+    "cholesterol": ["total cholesterol", "serum cholesterol", "cholesterol, total", "cholesterol total"],
+    "creatinine": ["serum creatinine", "sr creatinine", "creatinine"],
     "tsh": ["thyroid stimulating hormone", "thyroid stimulating hormone (tsh)"],
     "free t4": ["ft4", "free thyroxine", "t4, free", "t4 free"],
     "ferritin": ["serum ferritin"],
@@ -30,6 +30,14 @@ SYNONYM_MAP = {
     "alt": ["alanine aminotransferase", "alanine aminotransferase (alt)", "sgpt"],
     "ast": ["aspartate aminotransferase", "aspartate aminotransferase (ast)", "sgot"],
     "bilirubin": ["total bilirubin", "bilirubin, total", "serum bilirubin", "bilirubin total"],
+    "sodium": ["serum sodium", "na", "na+", "s. sodium"],
+    "potassium": ["serum potassium", "k", "k+", "s. potassium"],
+    "chloride": ["serum chloride", "cl", "cl-", "s. chloride"],
+    "calcium": ["serum calcium", "ca", "total calcium", "ca++", "s. calcium"],
+    "egfr": ["estimated glomerular filtration rate", "estimated gfr", "gfr", "egfr (ckd-epi)"],
+    "uric acid": ["serum uric acid", "uric acid, serum", "s. uric acid"],
+    "crp": ["c-reactive protein", "c-reactive protein (crp)", "hs-crp"],
+    "esr": ["erythrocyte sedimentation rate", "erythrocyte sedimentation rate (esr)", "sed rate"],
 }
 
 DEFAULT_BIOMARKER_DEFINITIONS = {
@@ -51,7 +59,7 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "default_max": 11000.0,
         "critical_low": 2000.0,
         "critical_high": 30000.0,
-        "aliases": ["white blood cell count", "white blood cell count (wbc)", "wbc", "tlc", "total leucocyte count", "leukocytes", "white blood cell"]
+        "aliases": ["white blood cell count", "white blood cell count (wbc)", "wbc count", "wbc-count", "wbc", "tlc", "total leucocyte count", "leukocytes", "leukocyte count", "leucocyte count", "white blood cell"]
     },
     "red_blood_cell_count": {
         "canonical_name": "Red Blood Cell Count (RBC)",
@@ -61,7 +69,7 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "default_max": 5.9,
         "critical_low": 2.5,
         "critical_high": 7.0,
-        "aliases": ["red blood cell count", "red blood cell count (rbc)", "rbc", "red blood cell"]
+        "aliases": ["red blood cell count", "red blood cell count (rbc)", "rbc count", "rbc-count", "rbc", "erythrocyte count", "red blood cell"]
     },
     "platelets": {
         "canonical_name": "Platelet Count",
@@ -71,7 +79,7 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "default_max": 450000.0,
         "critical_low": 50000.0,
         "critical_high": 1000000.0,
-        "aliases": ["platelets", "platelet count", "plt", "thrombocytes", "platelet"]
+        "aliases": ["platelets", "platelet count", "platelet-count", "plt", "thrombocytes", "platelet"]
     },
     "hematocrit": {
         "canonical_name": "Hematocrit (PCV)",
@@ -91,7 +99,7 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "default_max": 99.0,
         "critical_low": 50.0,
         "critical_high": 350.0,
-        "aliases": ["fasting blood glucose", "glucose fasting", "fbs", "fasting blood sugar", "sugar fasting", "blood sugar", "sugar", "glucose"]
+        "aliases": ["fasting blood glucose", "glucose fasting", "glucose, fasting", "fasting glucose", "fbs", "fasting blood sugar", "sugar fasting", "blood sugar", "sugar", "glucose"]
     },
     "hba1c": {
         "canonical_name": "Glycated Hemoglobin (HbA1c)",
@@ -232,6 +240,106 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "critical_low": 0.0,
         "critical_high": 15.0,
         "aliases": ["bilirubin, total", "total bilirubin", "bilirubin total", "serum bilirubin", "bilirubin"]
+    },
+    "sodium": {
+        "canonical_name": "Sodium",
+        "category": "Comprehensive Metabolic Panel",
+        "default_unit": "mEq/L",
+        "default_min": 135.0,
+        "default_max": 145.0,
+        "critical_low": 120.0,
+        "critical_high": 160.0,
+        "aliases": ["sodium", "serum sodium", "na", "na+", "s. sodium"]
+    },
+    "potassium": {
+        "canonical_name": "Potassium",
+        "category": "Comprehensive Metabolic Panel",
+        "default_unit": "mEq/L",
+        "default_min": 3.5,
+        "default_max": 5.1,
+        "critical_low": 2.8,
+        "critical_high": 6.2,
+        "aliases": ["potassium", "serum potassium", "k", "k+", "s. potassium"]
+    },
+    "chloride": {
+        "canonical_name": "Chloride",
+        "category": "Comprehensive Metabolic Panel",
+        "default_unit": "mEq/L",
+        "default_min": 96.0,
+        "default_max": 106.0,
+        "critical_low": 80.0,
+        "critical_high": 120.0,
+        "aliases": ["chloride", "serum chloride", "cl", "cl-", "s. chloride"]
+    },
+    "calcium": {
+        "canonical_name": "Calcium",
+        "category": "Comprehensive Metabolic Panel",
+        "default_unit": "mg/dL",
+        "default_min": 8.5,
+        "default_max": 10.2,
+        "critical_low": 6.5,
+        "critical_high": 13.0,
+        "aliases": ["calcium", "serum calcium", "ca", "total calcium", "ca++", "s. calcium"]
+    },
+    "urine_protein": {
+        "canonical_name": "Urine Protein",
+        "category": "Urinalysis",
+        "default_unit": "mg/dL",
+        "default_min": 0.0,
+        "default_max": 14.0,
+        "critical_low": None,
+        "critical_high": 300.0,
+        "aliases": ["urine protein", "protein urine", "protein, urine", "urinary protein", "urine albumin"]
+    },
+    "urine_glucose": {
+        "canonical_name": "Urine Glucose",
+        "category": "Urinalysis",
+        "default_unit": "mg/dL",
+        "default_min": 0.0,
+        "default_max": 15.0,
+        "critical_low": None,
+        "critical_high": 500.0,
+        "aliases": ["urine glucose", "glucose urine", "glucose, urine", "urinary glucose", "urine sugar"]
+    },
+    "egfr": {
+        "canonical_name": "Estimated Glomerular Filtration Rate (eGFR)",
+        "category": "Renal Panel",
+        "default_unit": "mL/min/1.73m2",
+        "default_min": 90.0,
+        "default_max": None,
+        "critical_low": 15.0,
+        "critical_high": None,
+        "aliases": ["egfr", "estimated glomerular filtration rate", "estimated glomerular filtration rate (egfr)", "gfr", "estimated gfr", "egfr (ckd-epi)", "gfr estimated"]
+    },
+    "uric_acid": {
+        "canonical_name": "Uric Acid, Serum",
+        "category": "Renal Panel",
+        "default_unit": "mg/dL",
+        "default_min": 3.5,
+        "default_max": 7.2,
+        "critical_low": 1.5,
+        "critical_high": 12.0,
+        "aliases": ["uric acid", "serum uric acid", "uric acid, serum", "s. uric acid"]
+    },
+    "crp": {
+        "canonical_name": "C-Reactive Protein (CRP)",
+        "category": "Inflammatory Markers",
+        "default_unit": "mg/L",
+        "default_min": 0.0,
+        "default_max": 3.0,
+        "critical_low": None,
+        "critical_high": 50.0,
+        "aliases": ["crp", "c-reactive protein", "c-reactive protein (crp)", "hs-crp", "high sensitivity crp"]
+    },
+    "esr": {
+        "canonical_name": "Erythrocyte Sedimentation Rate (ESR)",
+        "category": "Inflammatory Markers",
+        "default_unit": "mm/hr",
+        "default_min": 0.0,
+        "default_max": 20.0,
+        "critical_low": None,
+        "critical_high": 100.0,
+        "aliases": ["esr", "erythrocyte sedimentation rate", "erythrocyte sedimentation rate (esr)", "sed rate", "westergren esr"]
     }
 }
 
@@ -252,6 +360,17 @@ def _generate_aliases_for_name(test_name: str, canonical_name: str) -> List[str]
         no_parens = re.sub(r"\(.*?\)", "", cleaned).strip()
         if no_parens:
             aliases.add(no_parens)
+            # Invert comma formats like "cholesterol, total" -> "total cholesterol" and "glucose, fasting" -> "fasting glucose"
+            if "," in no_parens:
+                parts = [p.strip() for p in no_parens.split(",") if p.strip()]
+                if len(parts) == 2:
+                    aliases.add(f"{parts[1]} {parts[0]}")
+                    aliases.add(f"{parts[0]} {parts[1]}")
+            else:
+                words = no_parens.split()
+                if len(words) == 2:
+                    aliases.add(f"{words[1]}, {words[0]}")
+                    aliases.add(f"{words[0]}, {words[1]}")
 
     # Expand standard clinical terminology synonyms
     for root, syns in SYNONYM_MAP.items():
@@ -288,9 +407,10 @@ def load_biomarkers_from_db_sync() -> Dict[str, Any]:
             for r in rows:
                 key = r.test_name.lower().replace(" ", "_")
                 aliases = _generate_aliases_for_name(r.test_name, r.canonical_name)
-                # Merge with default aliases if existing
+                # Merge with default aliases and database-stored synonyms if existing
                 existing_aliases = library.get(key, {}).get("aliases", [])
-                combined_aliases = sorted(list(set(aliases + existing_aliases)), key=len, reverse=True)
+                db_synonyms = [s.lower().strip() for s in (r.synonyms or []) if isinstance(s, str)]
+                combined_aliases = sorted(list(set(aliases + existing_aliases + db_synonyms)), key=len, reverse=True)
 
                 library[key] = {
                     "id": r.id,
@@ -354,6 +474,7 @@ def parse_range_string(range_str: str) -> tuple[Optional[float], Optional[float]
         return None, None
     
     cleaned = range_str.replace("–", "-").replace("—", "-").strip()
+    cleaned = re.sub(r"(\d+),(\d{3})", r"\1\2", cleaned)
     
     # Pattern: 12.0 - 17.5
     dash_match = re.search(r"([\d\.]+)\s*-\s*([\d\.]+)", cleaned)
@@ -364,7 +485,7 @@ def parse_range_string(range_str: str) -> tuple[Optional[float], Optional[float]
             pass
             
     # Pattern: < 200 or <= 200
-    less_match = re.search(r"[<≤]\s*([\d\.]+)", cleaned)
+    less_match = re.search(r"(?:<=|[<≤])\s*([\d\.]+)", cleaned)
     if less_match:
         try:
             return None, float(less_match.group(1))
@@ -372,7 +493,7 @@ def parse_range_string(range_str: str) -> tuple[Optional[float], Optional[float]
             pass
 
     # Pattern: > 50 or >= 50
-    greater_match = re.search(r"[>≥]\s*([\d\.]+)", cleaned)
+    greater_match = re.search(r"(?:>=|[>≥])\s*([\d\.]+)", cleaned)
     if greater_match:
         try:
             return float(greater_match.group(1)), None
@@ -381,8 +502,48 @@ def parse_range_string(range_str: str) -> tuple[Optional[float], Optional[float]
             
     return None, None
 
+NON_LAB_SECTION_PATTERNS = [
+    r"^\s*(?:\d+[\.\)]\s*)?(?:subjective\s+findings|patient\s+history|history\s+of\s+present\s+illness|past\s+medical\s+history|chief\s+complaint)\b",
+    r"^\s*(?:\d+[\.\)]\s*)?(?:objective\s+findings|physical\s+exam(?:ination)?|vital\s+signs)\b",
+    r"^\s*(?:\d+[\.\)]\s*)?(?:assessment\s*(?:&|and)?\s*clinical\s+diagnosis|assessment\b|clinical\s+diagnosis|impression)\b",
+    r"^\s*(?:\d+[\.\)]\s*)?(?:management\s*(?:&|and)?\s*treatment\s+plan|treatment\s+plan|management\s+plan|pharmacotherapy|prescriptions?|medications?|current\s+medications?)\b",
+    r"^\s*(?:\d+[\.\)]\s*)?(?:clinical\s+coordination|follow-up\s+screening|follow-up\s+plan|advice|doctor\'?s\s+advice|recommendations?)\b",
+    r"^\s*(?:electronic\s+signature|disclaimer|for\s+informational\s+purposes)\b"
+]
+
+LAB_SECTION_PATTERNS = [
+    r"^\s*(?:\d+[\.\)]\s*)?(?:diagnostic\s+investigations|laboratory\s+results|lab\s+results|laboratory\s+investigations|investigations|test\s+results|biochemistry|hematology|serology|endocrinology|pathology|urinalysis|blood\s+work|metabolic\s+panel|lipid\s+panel|thyroid\s+panel|renal\s+function|liver\s+function)\b"
+]
+
+def is_medication_or_non_lab_line(line_lower: str) -> bool:
+    """Detects whether a text line is a prescription, medication administration instruction, or narrative comment."""
+    med_indicators = [
+        r"\b(?:initiate|initiated|prescribe|prescribed|discontinue|take|taken|administer|administered)\b",
+        r"\b(?:orally|daily|once daily|twice daily|bid|tid|qid|sublingually?|empty stomach|before breakfast|after meals|before food|with meals)\b",
+        r"\b(?:tablets?|capsules?|syrups?|injections?|drops?|infusions?|dosage|titrations?)\b"
+    ]
+    return any(re.search(pattern, line_lower) for pattern in med_indicators)
+
+def is_drug_compound(line_lower: str, match_start: int, alias: str) -> bool:
+    """Checks whether the matched mineral/biomarker is part of a pharmaceutical salt (e.g. Levothyroxine Sodium)."""
+    prefix = line_lower[:match_start].strip()
+    if prefix:
+        words = re.findall(r"[a-z0-9]+", prefix)
+        if words:
+            last_word = words[-1]
+            if alias in ["sodium", "potassium", "calcium", "chloride", "iron", "magnesium", "zinc"]:
+                drug_prefixes = {
+                    "levothyroxine", "warfarin", "docusate", "valproate", "divalproex",
+                    "heparin", "diclofenac", "naproxen", "ceftriaxone", "ampicillin",
+                    "colistimethate", "bacteriostatic", "supplement", "supplements",
+                    "ferrous", "elemental"
+                }
+                if last_word in drug_prefixes:
+                    return True
+    return False
+
 def clean_unit_string(unit: str) -> str:
-    """Sanitizes extracted unit string, preventing flags or punctuation from polluting units."""
+    """Sanitizes extracted unit string, preventing flags, dosing narrative, or punctuation from polluting units."""
     if not unit:
         return ""
     # Strip full flag words, not single letters like 'L' which can stand for Liter (e.g. U/L, cells/mcL)
@@ -392,8 +553,29 @@ def clean_unit_string(unit: str) -> str:
         unit,
         flags=re.I
     ).strip()
+
+    # Strip narrative dosing instructions or non-unit words
+    u = re.split(
+        r"\b(orally|daily|morning|evening|strictly|empty|stomach|before|after|breakfast|take|taken|tablet|tablets|capsule|capsules|patient|every|hours?|weeks?|days?|months?|od|bid|tid|qid|prn)\b",
+        u,
+        flags=re.I
+    )[0].strip()
+
     u = u.strip(":=- (),")
-    return u
+
+    # Match valid medical unit patterns: e.g. mg/dL, uIU/mL, %, g/dL, mEq/L, mmol/L, U/L, ng/dL, cells/mcL, x10^3/uL, mm/hr, etc.
+    m = re.match(r"^([a-zA-Z0-9%µμ°\^/\*\-]+(?:\s*[a-zA-Z0-9%µμ°\^/\*\-]+){0,2})", u)
+    if m:
+        candidate = m.group(1).strip()
+        common_words = {"in", "on", "at", "to", "for", "and", "or", "the", "is", "was", "with", "by", "from", "of"}
+        if candidate.lower() not in common_words:
+            u = candidate
+        else:
+            u = ""
+    else:
+        u = ""
+
+    return u[:30]
 
 def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_keys: set) -> Optional[Dict[str, Any]]:
     """
@@ -403,6 +585,8 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
     line_clean = line.strip()
     if not line_clean:
         return None
+    # Pre-normalize comma thousands separators in numbers (e.g. 8,700 -> 8700, 235,000 -> 235000, 4,000 -> 4000)
+    line_clean = re.sub(r"(\d+),(\d{3})", r"\1\2", line_clean)
     line_lower = line_clean.lower()
 
     # Skip lines that are known commentary, section headers, or signatures
@@ -410,9 +594,16 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
         "alert:", "thyroid alert", "iron alert", "liver alert",
         "electronically signed", "report status", "patient name",
         "ordering physician", "specimen id", "date of birth",
-        "test component", "laboratory comments", "this is for informational"
+        "test component", "laboratory comments", "this is for informational",
+        "pharmacotherapy", "treatment plan", "management plan", "prescription",
+        "follow-up", "clinical coordination", "subjective findings",
+        "chief complaint", "history of present illness", "past medical history",
+        "vital signs", "physical exam", "doctor's advice", "advice:"
     ]
     if any(line_lower.startswith(p) or f"{p}:" in line_lower for p in skip_prefixes):
+        return None
+
+    if is_medication_or_non_lab_line(line_lower):
         return None
 
     best_match = None
@@ -431,6 +622,8 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
             pattern = r"(?:^|[\s,;])(" + re.escape(alias) + r"(?:\s*\([^)]*\))?)(\s*[:=-]?\s*)"
             m = re.search(pattern, line_lower)
             if m:
+                if is_drug_compound(line_lower, m.start(1), alias):
+                    continue
                 match_text = m.group(1)
                 if len(match_text) > best_len:
                     best_len = len(match_text)
@@ -446,14 +639,48 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
     if not rest:
         return None
 
-    # Match the numerical result value at start of rest
-    val_match = re.match(r"^([\d\.]+)", rest)
-    if not val_match:
+    # Strip descriptor suffixes like "count", "counts", "level", "value", etc.
+    rest = re.sub(r"^(?:count|counts|level|levels|concentration|value|result|index|total)\b\s*[:=-]?\s*", "", rest, flags=re.I).strip()
+    if not rest:
         return None
 
-    try:
-        val = float(val_match.group(1))
-    except ValueError:
+    # Match the numerical result value or qualitative indicator (Negative, Nil, Normal, Trace, Positive, 1+, 2+, 3+, 4+)
+    val = None
+    qualitative_flag = None
+    val_text = None
+
+    val_match = re.match(r"^([\d,]+(?:\.\d+)?)", rest)
+    if val_match:
+        raw_num = val_match.group(1).replace(",", "")
+        try:
+            val = float(raw_num)
+            val_text = raw_num
+        except ValueError:
+            val = None
+    else:
+        # Check qualitative indicators
+        neg_match = re.match(r"^(negative|nil|normal|non-reactive|absent)\b", rest, flags=re.I)
+        if neg_match:
+            val = 0.0
+            val_text = neg_match.group(1).capitalize()
+            qualitative_flag = "NORMAL"
+            val_match = neg_match
+        else:
+            trace_match = re.match(r"^(trace)\b", rest, flags=re.I)
+            if trace_match:
+                val = 15.0
+                val_text = "Trace"
+                qualitative_flag = "NORMAL"
+                val_match = trace_match
+            else:
+                pos_match = re.match(r"^(positive|present|reactive|[1-4]\+)\b", rest, flags=re.I)
+                if pos_match:
+                    val = 30.0
+                    val_text = pos_match.group(1).upper()
+                    qualitative_flag = "HIGH"
+                    val_match = pos_match
+
+    if val is None or not val_match:
         return None
 
     after_val = rest[val_match.end():].strip()
@@ -468,9 +695,9 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
     if flag_match:
         explicit_flag = flag_match.group(1).upper().replace(" ", "_")
 
-    # Detect reference range: e.g. "0.4 - 4.0", "15 - 150", "< 200", "> 50"
+    # Detect reference range: e.g. "0.4 - 4.0", "15 - 150", "< 200", ">= 90", "> 50"
     range_match = re.search(
-        r"(\(?\s*[\d\.]+\s*[-–—]\s*[\d\.]+\s*\)?)|([<≤]\s*[\d\.]+)|([>≥]\s*[\d\.]+)",
+        r"(\(?\s*[\d\.]+\s*[-–—]\s*[\d\.]+\s*\)?)|((?:<=|[<≤])\s*[\d\.]+)|((?:>=|[>≥])\s*[\d\.]+)",
         after_val
     )
 
@@ -504,10 +731,14 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
 
     # Fall back to default library range if no range was stated in the document
     if ref_min is None or ref_max is None:
-        ref_min = best_meta.get("default_min")
-        ref_max = best_meta.get("default_max")
+        if ref_min is None:
+            ref_min = best_meta.get("default_min")
+        if ref_max is None:
+            ref_max = best_meta.get("default_max")
         if not ref_text and ref_min is not None and ref_max is not None:
             ref_text = f"{ref_min} - {ref_max}"
+        elif not ref_text and ref_min is not None and ref_max is None:
+            ref_text = f">= {ref_min}"
 
     # Critical thresholds: ignore if out of scale with this report's reference boundaries
     crit_low = best_meta.get("critical_low")
@@ -517,7 +748,10 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
     if ref_min is not None and crit_high is not None and crit_high < ref_min:
         crit_high = None
 
-    eval_flag = evaluate_flag(val, ref_min, ref_max, crit_low, crit_high)
+    if qualitative_flag:
+        eval_flag = qualitative_flag
+    else:
+        eval_flag = evaluate_flag(val, ref_min, ref_max, crit_low, crit_high)
 
     # If explicit flag was printed on the report, respect it; otherwise use evaluated
     if explicit_flag in ["HIGH", "CRITICAL_HIGH", "LOW", "CRITICAL_LOW"]:
@@ -532,7 +766,7 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
         "test_name": best_meta["canonical_name"],
         "canonical_name": best_meta["canonical_name"],
         "value_numeric": val,
-        "value_text": str(val),
+        "value_text": val_text or str(val),
         "unit": unit,
         "reference_min": ref_min,
         "reference_max": ref_max,
@@ -566,7 +800,25 @@ def extract_biomarkers_from_text(
 
     # Pass 1: Parse structured lines
     raw_lines = raw_text.splitlines()
+    has_explicit_sections = any(re.search(lp, raw_text, re.I | re.M) for lp in LAB_SECTION_PATTERNS)
+    in_lab_section = not has_explicit_sections
+
     for line in raw_lines:
+        line_clean = line.strip()
+        if not line_clean:
+            continue
+        line_lower = line_clean.lower()
+
+        if any(re.search(lp, line_lower) for lp in LAB_SECTION_PATTERNS):
+            in_lab_section = True
+            continue
+        if any(re.search(nlp, line_lower) for nlp in NON_LAB_SECTION_PATTERNS):
+            in_lab_section = False
+            continue
+
+        if has_explicit_sections and not in_lab_section:
+            continue
+
         res = parse_line_biomarker(line, biomarker_library, found_keys)
         if res:
             found_keys.add(res["key"])
@@ -576,7 +828,13 @@ def extract_biomarkers_from_text(
 
     # Pass 2: Tabular whitespace column alignment fallback for remaining unextracted markers
     for line in raw_lines:
-        parts = [p.strip() for p in re.split(r"\s{2,}|\t+", line.strip()) if p.strip()]
+        line_clean = line.strip()
+        if not line_clean:
+            continue
+        line_lower = line_clean.lower()
+        if is_medication_or_non_lab_line(line_lower):
+            continue
+        parts = [p.strip() for p in re.split(r"\s{2,}|\t+", line_clean) if p.strip()]
         if len(parts) >= 2:
             row_header = parts[0].lower()
             for key, meta in biomarker_library.items():
@@ -584,6 +842,8 @@ def extract_biomarkers_from_text(
                     continue
                 for alias in meta.get("aliases", []):
                     if alias and (alias == row_header or re.search(r"\b" + re.escape(alias) + r"\b", row_header)):
+                        if is_drug_compound(line_lower, line_lower.find(alias), alias):
+                            continue
                         numbers = []
                         for col in parts[1:]:
                             found_nums = re.findall(r"[\d\.]+", col)

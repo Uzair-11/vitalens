@@ -13,6 +13,7 @@ class DoctorAvailability(Base):
     end_time = Column(Time, nullable=False)
     slot_duration_minutes = Column(Integer, default=30)
     is_booked = Column(Boolean, default=False)
+    booked_appointment_id = Column(String(36), nullable=True)
 
     # Relationships
     doctor = relationship("Doctor", back_populates="availability_slots")

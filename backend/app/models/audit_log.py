@@ -16,4 +16,6 @@ class AuditLog(Base):
     resource_id = Column(String(100), nullable=True)
     metadata_json = Column(JSON, nullable=True)
     ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    session_id = Column(String(100), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone, time
-from sqlalchemy import Column, String, Date, Time, Integer, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, String, Date, Time, Integer, Boolean, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -19,6 +19,10 @@ class DoctorWorkingHours(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    __table_args__ = (
+        UniqueConstraint('doctor_id', 'day_of_week', 'start_time', name='uq_doctor_working_hours_doctor_day_time'),
+    )
 
     # Relationships
     doctor = relationship("Doctor", back_populates="working_hours")

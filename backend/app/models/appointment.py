@@ -11,7 +11,8 @@ class Appointment(Base):
     __tablename__ = "appointments"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    booking_reference = Column(String(20), unique=True, nullable=True, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
     doctor_id = Column(String(36), ForeignKey("doctors.id", ondelete="CASCADE"), nullable=False, index=True)
     report_id = Column(String(36), ForeignKey("medical_reports.id", ondelete="SET NULL"), nullable=True)
     appointment_date = Column(Date, nullable=False, index=True)
@@ -25,11 +26,13 @@ class Appointment(Base):
     visit_reason = Column(String(255), nullable=True)
     patient_notes = Column(Text, nullable=True)
     cancellation_reason = Column(String(255), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_by_user_id = Column(String(36), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
-    # Relationships
+    # Relationships - Clinical notes are preserved if appointment record is altered
     user = relationship("User", back_populates="appointments")
     doctor = relationship("Doctor", back_populates="appointments")
     report = relationship("MedicalReport", back_populates="appointments")
-    consultation_note = relationship("ConsultationNote", back_populates="appointment", uselist=False, cascade="all, delete-orphan")
+    consultation_note = relationship("ConsultationNote", back_populates="appointment", uselist=False)

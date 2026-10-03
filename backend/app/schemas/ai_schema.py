@@ -38,6 +38,7 @@ class SpecialtyRecommendationResponse(BaseModel):
     emergency_message: Optional[str] = None
     abnormal_biomarkers_considered: List[str] = []
     symptoms_considered: List[str] = []
+    trace_id: Optional[str] = None
 
 class ReportQARequest(BaseModel):
     report_id: Optional[str] = None

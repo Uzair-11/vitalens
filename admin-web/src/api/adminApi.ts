@@ -136,6 +136,10 @@ export const adminApi = {
     email: string;
     temporary_password?: string;
     full_name: string;
+    phone?: string;
+    registration_number?: string;
+    registration_council?: string;
+    state_code?: string;
     specialty_id: string;
     qualification: string;
     experience_years: number;
@@ -150,6 +154,11 @@ export const adminApi = {
     return res.data;
   },
 
+  updateDoctor: async (doctorId: string, data: any) => {
+    const res = await adminClient.patch(`/admin/doctors/${doctorId}`, data);
+    return res.data;
+  },
+
   verifyDoctor: async (doctorId: string, verificationStatus: 'VERIFIED' | 'REJECTED' | 'PENDING') => {
     const res = await adminClient.patch(`/admin/doctors/${doctorId}/verify?verification_status=${verificationStatus}`);
     return res.data;
@@ -160,11 +169,17 @@ export const adminApi = {
     return res.data;
   },
 
+  deleteDoctor: async (doctorId: string) => {
+    const res = await adminClient.delete(`/admin/doctors/${doctorId}`);
+    return res.data;
+  },
+
   // Patients / Users
-  getUsers: async (params?: { search?: string; role?: string; skip?: number; limit?: number }) => {
+  getUsers: async (params?: { search?: string; role?: string; is_active?: boolean; skip?: number; limit?: number }) => {
     const query = new URLSearchParams();
     if (params?.search) query.append('search', params.search);
     if (params?.role) query.append('role', params.role);
+    if (params?.is_active !== undefined) query.append('is_active', String(params.is_active));
     if (params?.skip !== undefined) query.append('skip', String(params.skip));
     if (params?.limit !== undefined) query.append('limit', String(params.limit));
     const url = `/admin/users/${query.toString() ? `?${query.toString()}` : ''}`;
@@ -177,8 +192,25 @@ export const adminApi = {
     return res.data;
   },
 
-  toggleUserStatus: async (userId: string, isActive: boolean) => {
-    const res = await adminClient.patch(`/admin/users/${userId}/status?is_active=${isActive}`);
+  toggleUserStatus: async (userId: string, isActive: boolean, reason?: string) => {
+    const query = new URLSearchParams({ is_active: String(isActive) });
+    if (reason && reason.trim()) query.append('reason', reason.trim());
+    const res = await adminClient.patch(`/admin/users/${userId}/status?${query.toString()}`);
+    return res.data;
+  },
+
+  createUser: async (data: { email: string; password: string; full_name: string; role: string; phone?: string }) => {
+    const res = await adminClient.post('/admin/users/', data);
+    return res.data;
+  },
+
+  updateUserRole: async (userId: string, role: string) => {
+    const res = await adminClient.patch(`/admin/users/${userId}/role`, { role });
+    return res.data;
+  },
+
+  updateUserAbha: async (userId: string, abhaNumber: string) => {
+    const res = await adminClient.patch(`/admin/users/${userId}/abha`, { abha_number: abhaNumber });
     return res.data;
   },
 
@@ -339,5 +371,42 @@ export const adminApi = {
     const res = await adminClient.get(`/doctor/appointments/${appointmentId}/notes`);
     return res.data;
   },
+
+  // AI Trace & Observability (Super Admin Only)
+  listAITraces: async (params?: {
+    search?: string;
+    status?: string;
+    specialty?: string;
+    start_date?: string;
+    end_date?: string;
+    skip?: number;
+    limit?: number;
+  }) => {
+    const res = await adminClient.get('/admin/ai-trace/', { params });
+    return res.data;
+  },
+
+  getAITraceDetail: async (traceId: string) => {
+    const res = await adminClient.get(`/admin/ai-trace/${traceId}`);
+    return res.data;
+  },
+
+  getAITraceStats: async () => {
+    const res = await adminClient.get('/admin/ai-trace/stats');
+    return res.data;
+  },
+
+  simulateAITrace: async (data: {
+    primary_concern: string;
+    symptoms_list?: string[];
+    body_region?: string;
+    severity_score?: number;
+    duration_days?: number;
+    biomarkers?: any[];
+  }) => {
+    const res = await adminClient.post('/admin/ai-trace/simulate', data);
+    return res.data;
+  },
 };
+
 

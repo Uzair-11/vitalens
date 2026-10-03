@@ -16,8 +16,20 @@ class Biomarker(Base):
     reference_min = Column(Float, nullable=True)
     reference_max = Column(Float, nullable=True)
     reference_text = Column(String(100), nullable=True)
-    flag = Column(String(20), default="NORMAL")  # NORMAL, HIGH, LOW, CRITICAL, ABNORMAL
+    flag = Column(String(20), default="NORMAL", index=True, nullable=False)  # NORMAL, HIGH, LOW, CRITICAL, ABNORMAL
     category = Column(String(100), default="General Panel")  # Hematology, Lipid Profile, Liver Function, etc.
 
     # Relationships
     report = relationship("MedicalReport", back_populates="biomarkers")
+
+    @property
+    def clinical_interpretation(self):
+        if self.flag and str(self.flag).upper() not in ["NORMAL"]:
+            try:
+                from app.ml.explainer_ai import retrieve_explanation
+                explanation_text, conf = retrieve_explanation(self.canonical_name or self.test_name, self.flag)
+                if conf >= 0.4 and not explanation_text.startswith("No confident match found"):
+                    return explanation_text
+            except Exception:
+                pass
+        return None

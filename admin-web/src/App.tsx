@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from './api/adminApi';
-
-type AdminTab = 'dashboard' | 'doctors' | 'patients' | 'appointments' | 'content' | 'ai_review';
-type DoctorTab = 'doc_overview' | 'doc_schedule' | 'doc_appointments' | 'doc_patients';
+import { Sidebar, AdminTab, DoctorTab } from './components/Sidebar';
+import { UserManagement } from './components/UserManagement';
+import { DashboardView } from './components/DashboardView';
+import { DoctorsManagement } from './components/DoctorsManagement';
+import { PatientsManagement } from './components/PatientsManagement';
+import { AITraceView } from './components/AITraceView';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -10,8 +13,53 @@ export default function App() {
   // Auth state
   const [token, setToken] = useState<string | null>(localStorage.getItem('vitalens_admin_token'));
   const [role, setRole] = useState<string | null>(localStorage.getItem('vitalens_admin_role'));
-  const [adminTab, setAdminTab] = useState<AdminTab>('dashboard');
-  const [doctorTab, setDoctorTab] = useState<DoctorTab>('doc_overview');
+
+  // Helpers to read initial tab from URL hash or localStorage
+  const getInitialAdminTab = (): AdminTab => {
+    const rawHash = window.location.hash.replace('#', '') as AdminTab;
+    const validTabs: AdminTab[] = ['dashboard', 'doctors', 'patients', 'appointments', 'content', 'ai_review', 'user_management', 'ai_trace'];
+    if (rawHash && validTabs.includes(rawHash)) {
+      return rawHash;
+    }
+    const saved = localStorage.getItem('vitalens_admin_tab') as AdminTab;
+    if (saved && validTabs.includes(saved)) {
+      return saved;
+    }
+    return 'dashboard';
+  };
+
+  const getInitialDoctorTab = (): DoctorTab => {
+    const rawHash = window.location.hash.replace('#', '') as DoctorTab;
+    const validTabs: DoctorTab[] = ['doc_overview', 'doc_appointments', 'doc_schedule', 'doc_patients'];
+    if (rawHash && validTabs.includes(rawHash)) {
+      return rawHash;
+    }
+    const saved = localStorage.getItem('vitalens_doctor_tab') as DoctorTab;
+    if (saved && validTabs.includes(saved)) {
+      return saved;
+    }
+    return 'doc_overview';
+  };
+
+  const [adminTab, setAdminTab] = useState<AdminTab>(getInitialAdminTab);
+  const [doctorTab, setDoctorTab] = useState<DoctorTab>(getInitialDoctorTab);
+
+  const handleSelectAdminTab = (tab: AdminTab) => {
+    setAdminTab(tab);
+    localStorage.setItem('vitalens_admin_tab', tab);
+    if (window.location.hash !== `#${tab}`) {
+      window.location.hash = tab;
+    }
+  };
+
+  const handleSelectDoctorTab = (tab: DoctorTab) => {
+    setDoctorTab(tab);
+    localStorage.setItem('vitalens_doctor_tab', tab);
+    if (window.location.hash !== `#${tab}`) {
+      window.location.hash = tab;
+    }
+  };
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -128,6 +176,40 @@ export default function App() {
     }
   }, [token, role, adminTab, doctorTab]);
 
+  // Listen for browser Back/Forward or manual hash navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      const rawHash = window.location.hash.replace('#', '');
+      const validAdminTabs: AdminTab[] = ['dashboard', 'doctors', 'patients', 'appointments', 'content', 'ai_review', 'user_management', 'ai_trace'];
+      const validDoctorTabs: DoctorTab[] = ['doc_overview', 'doc_appointments', 'doc_schedule', 'doc_patients'];
+
+      if (isDoctor) {
+        if (validDoctorTabs.includes(rawHash as DoctorTab)) {
+          setDoctorTab(rawHash as DoctorTab);
+          localStorage.setItem('vitalens_doctor_tab', rawHash);
+        }
+      } else {
+        if (validAdminTabs.includes(rawHash as AdminTab)) {
+          setAdminTab(rawHash as AdminTab);
+          localStorage.setItem('vitalens_admin_tab', rawHash);
+        }
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [isDoctor]);
+
+  // Keep URL hash synchronized on initial mount if logged in
+  useEffect(() => {
+    if (token) {
+      const currentTab = isDoctor ? doctorTab : adminTab;
+      if (window.location.hash !== `#${currentTab}`) {
+        window.location.hash = currentTab;
+      }
+    }
+  }, [token, isDoctor]);
+
   const loadAdminData = async (tab: AdminTab) => {
     setLoading(true);
     setErrorMsg(null);
@@ -146,7 +228,7 @@ export default function App() {
           setNewDoctor((prev) => ({ ...prev, specialty_id: specs[0].id }));
         }
       } else if (tab === 'patients') {
-        const data = await adminApi.getUsers({ search: userSearch || undefined });
+        const data = await adminApi.getUsers({ search: userSearch || undefined, role: 'PATIENT' });
         setUsers(data);
       } else if (tab === 'appointments') {
         const data = await adminApi.getAppointments({ status: appointmentStatusFilter || undefined });
@@ -209,6 +291,9 @@ export default function App() {
       const data = await adminApi.login(email, password);
       setToken(data.access_token);
       setRole(data.role);
+      const isDoc = data.role === 'DOCTOR';
+      const initialTab = isDoc ? getInitialDoctorTab() : getInitialAdminTab();
+      window.location.hash = initialTab;
       setSuccessMsg(`Welcome, ${data.role}! Signed in successfully.`);
     } catch (err: any) {
       setErrorMsg(err.response?.data?.detail || err.message || 'Login failed. Please check credentials.');
@@ -224,6 +309,9 @@ export default function App() {
     setSelectedUser(null);
     setSelectedPatientChart(null);
     setActiveConsultationAppt(null);
+    localStorage.removeItem('vitalens_admin_tab');
+    localStorage.removeItem('vitalens_doctor_tab');
+    window.location.hash = '';
   };
 
   // ================= ADMIN ACTIONS =================
@@ -486,45 +574,6 @@ export default function App() {
               {loading ? 'Authenticating...' : 'Sign In'}
             </button>
           </form>
-
-          <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #eee', fontSize: 13, color: '#666' }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>Quick Test Accounts:</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@vitalens.health');
-                    setPassword('admin123');
-                  }}
-                  style={{ ...styles.secondaryButton, flex: 1 }}
-                >
-                  Admin (Ops Portal)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('staff@vitalens.health');
-                    setPassword('staff123');
-                  }}
-                  style={{ ...styles.secondaryButton, flex: 1 }}
-                >
-                  Support Staff
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('doctor.vance@vitalens.health');
-                  setPassword('doctor123');
-                }}
-                style={{ ...styles.secondaryButton, background: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd' }}
-              >
-                🩺 Dr. Robert Vance, MD (Doctor Portal)
-              </button>
-
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -535,52 +584,13 @@ export default function App() {
     return (
       <div style={styles.appContainer}>
         {/* Doctor Sidebar */}
-        <div style={{ ...styles.sidebar, background: '#093B3C' }}>
-          <div style={{ padding: '16px 16px', borderBottom: '1px solid #145354' }}>
-            <img
-              src="/assets/vitalens-logo-on-dark.png"
-              alt="VitaLens"
-              style={{ width: 140, height: 'auto', display: 'block', marginBottom: 8 }}
-            />
-            <div style={{ color: '#93c5fd', fontSize: 12, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#38bdf8' }} />
-              Role: <strong style={{ color: '#fff' }}>DOCTOR</strong>
-            </div>
-          </div>
-
-          <div style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <button
-              onClick={() => setDoctorTab('doc_overview')}
-              style={doctorTab === 'doc_overview' ? styles.activeNavButton : styles.navButton}
-            >
-              📊 Practice Overview
-            </button>
-            <button
-              onClick={() => setDoctorTab('doc_appointments')}
-              style={doctorTab === 'doc_appointments' ? styles.activeNavButton : styles.navButton}
-            >
-              🩺 My Appointments
-            </button>
-            <button
-              onClick={() => setDoctorTab('doc_schedule')}
-              style={doctorTab === 'doc_schedule' ? styles.activeNavButton : styles.navButton}
-            >
-              📅 Schedule & Availability
-            </button>
-            <button
-              onClick={() => setDoctorTab('doc_patients')}
-              style={doctorTab === 'doc_patients' ? styles.activeNavButton : styles.navButton}
-            >
-              👥 Consented Patients
-            </button>
-          </div>
-
-          <div style={{ marginTop: 'auto', padding: 16, borderTop: '1px solid #145354' }}>
-            <button onClick={handleLogout} style={styles.logoutButton}>
-              Sign Out
-            </button>
-          </div>
-        </div>
+        <Sidebar
+          role={role}
+          activeTab={doctorTab}
+          onSelectTab={(tab) => handleSelectDoctorTab(tab)}
+          onLogout={handleLogout}
+          isDoctor={true}
+        />
 
         {/* Doctor Main Content */}
         <div style={styles.mainContent}>
@@ -1033,71 +1043,27 @@ export default function App() {
   return (
     <div style={styles.appContainer}>
       {/* Sidebar Navigation */}
-      <div style={styles.sidebar}>
-        <div style={{ padding: '16px 16px', borderBottom: '1px solid #1c3d3e' }}>
-          <img
-            src="/assets/vitalens-logo-on-dark.png"
-            alt="VitaLens"
-            style={{ width: 140, height: 'auto', display: 'block', marginBottom: 8 }}
-          />
-          <div style={{ color: '#7ea8a9', fontSize: 12, marginTop: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#4ade80' }} />
-            Role: <strong style={{ color: '#fff' }}>{role}</strong>
-          </div>
-        </div>
-
-        <div style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <button
-            onClick={() => setAdminTab('dashboard')}
-            style={adminTab === 'dashboard' ? styles.activeNavButton : styles.navButton}
-          >
-            📊 Operational Dashboard
-          </button>
-          <button
-            onClick={() => setAdminTab('doctors')}
-            style={adminTab === 'doctors' ? styles.activeNavButton : styles.navButton}
-          >
-            👨‍⚕️ Doctors Management
-          </button>
-          <button
-            onClick={() => setAdminTab('patients')}
-            style={adminTab === 'patients' ? styles.activeNavButton : styles.navButton}
-          >
-            👥 Patient Directory
-          </button>
-          <button
-            onClick={() => setAdminTab('appointments')}
-            style={adminTab === 'appointments' ? styles.activeNavButton : styles.navButton}
-          >
-            📅 Appointments Oversight
-          </button>
-          <button
-            onClick={() => setAdminTab('content')}
-            style={adminTab === 'content' ? styles.activeNavButton : styles.navButton}
-          >
-            📖 Clinical Content & Glossary
-          </button>
-          <button
-            onClick={() => setAdminTab('ai_review')}
-            style={adminTab === 'ai_review' ? styles.activeNavButton : styles.navButton}
-          >
-            🤖 AI Recommendation Review
-          </button>
-        </div>
-
-        <div style={{ marginTop: 'auto', padding: 16, borderTop: '1px solid #1c3d3e' }}>
-          <button onClick={handleLogout} style={styles.logoutButton}>
-            Sign Out
-          </button>
-        </div>
-      </div>
+      <Sidebar
+        role={role}
+        activeTab={adminTab}
+        onSelectTab={(tab) => handleSelectAdminTab(tab)}
+        onLogout={handleLogout}
+        isDoctor={false}
+      />
 
       {/* Main Content Area */}
       <div style={styles.mainContent}>
         {/* Top Header */}
         <div style={styles.topHeader}>
-          <h2 style={{ margin: 0, fontSize: 20, color: '#1a1a1a', textTransform: 'capitalize' }}>
-            {adminTab.replace('_', ' ')}
+          <h2 style={{ margin: 0, fontSize: 20, color: '#1a1a1a' }}>
+            {adminTab === 'dashboard' && '📊 Operational Dashboard & Metrics'}
+            {adminTab === 'doctors' && '👨‍⚕️ Doctors Management'}
+            {adminTab === 'patients' && '👥 Patients Management'}
+            {adminTab === 'appointments' && '📅 Appointments Management'}
+            {adminTab === 'content' && '📖 Clinical Content & Glossary'}
+            {adminTab === 'ai_review' && '🤖 AI Recommendation Review'}
+            {adminTab === 'user_management' && '🛡️ Super Admin User Management'}
+            {adminTab === 'ai_trace' && '⚡ Super Admin AI Trace & Observability'}
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button onClick={() => loadAdminData(adminTab)} style={styles.secondaryButton}>
@@ -1113,279 +1079,31 @@ export default function App() {
 
         {/* TAB: DASHBOARD */}
         {adminTab === 'dashboard' && analytics && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={styles.kpiGrid}>
-              <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Total Registered Users</div>
-                <div style={styles.kpiValue}>{analytics.user_metrics?.total_registered_users || 0}</div>
-                <div style={styles.kpiSub}>🌱 {analytics.user_metrics?.signups_this_week || 0} signed up this week</div>
-              </div>
-              <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Verified Doctors</div>
-                <div style={styles.kpiValue}>
-                  {analytics.doctor_metrics?.active_verified_doctors || 0}{' '}
-                  <span style={{ fontSize: 16, color: '#666' }}>/ {analytics.doctor_metrics?.total_doctors || 0}</span>
-                </div>
-                <div style={styles.kpiSub}>⏳ {analytics.doctor_metrics?.pending_verification || 0} pending verification</div>
-              </div>
-              <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Reports Processed</div>
-                <div style={styles.kpiValue}>{analytics.report_metrics?.total_reports_processed || 0}</div>
-                <div style={styles.kpiSub}>✅ {analytics.report_metrics?.successfully_analyzed || 0} completed analysis</div>
-              </div>
-              <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Appointments Scheduled</div>
-                <div style={styles.kpiValue}>{analytics.appointment_metrics?.total_bookings || 0}</div>
-                <div style={styles.kpiSub}>❌ {analytics.appointment_metrics?.cancellation_rate_pct || 0}% cancellation rate</div>
-              </div>
-            </div>
-
-            <div style={styles.card}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1a1a1a' }}>Operational Summary Breakdown</h3>
-              <table style={styles.table}>
-                <tbody>
-                  <tr>
-                    <td style={styles.tdBold}>Active Patient Accounts</td>
-                    <td style={styles.td}>{analytics.user_metrics?.patient_accounts || 0}</td>
-                    <td style={styles.tdBold}>Doctor Verification Rate</td>
-                    <td style={styles.td}>{analytics.doctor_metrics?.verification_rate_pct || 0}%</td>
-                  </tr>
-                  <tr>
-                    <td style={styles.tdBold}>Confirmed Active Appointments</td>
-                    <td style={styles.td}>{analytics.appointment_metrics?.active_confirmed || 0}</td>
-                    <td style={styles.tdBold}>Completed Consultations</td>
-                    <td style={styles.td}>{analytics.appointment_metrics?.completed_consultations || 0}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DashboardView
+            analytics={analytics}
+            isSuperAdmin={role === 'SUPER_ADMIN'}
+            onNavigate={(tab) => handleSelectAdminTab(tab as AdminTab)}
+            onOpenAddDoctor={() => {
+              resetDoctorForm();
+              setShowCreateDoctorModal(true);
+            }}
+          />
         )}
 
         {/* TAB: DOCTORS */}
         {adminTab === 'doctors' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <input
-                  type="text"
-                  placeholder="Search doctor name..."
-                  value={doctorSearch}
-                  onChange={(e) => setDoctorSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && loadAdminData('doctors')}
-                  style={styles.input}
-                />
-                <select
-                  value={doctorStatusFilter}
-                  onChange={(e) => setDoctorStatusFilter(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="">All Verification Statuses</option>
-                  <option value="VERIFIED">VERIFIED</option>
-                  <option value="PENDING">PENDING</option>
-                  <option value="REJECTED">REJECTED</option>
-                </select>
-                <button onClick={() => loadAdminData('doctors')} style={styles.secondaryButton}>
-                  Filter
-                </button>
-              </div>
-
-              {!isSupportStaff && (
-                <button
-                  onClick={() => {
-                    resetDoctorForm();
-                    setShowCreateDoctorModal(true);
-                  }}
-                  style={styles.primaryButton}
-                >
-                  + Add New Doctor
-                </button>
-              )}
-            </div>
-
-            <div style={styles.card}>
-              <table style={styles.table}>
-                <thead>
-                  <tr style={styles.thRow}>
-                    <th style={styles.th}>Name & Clinic</th>
-                    <th style={styles.th}>Specialty</th>
-                    <th style={styles.th}>City</th>
-                    <th style={styles.th}>Fee</th>
-                    <th style={styles.th}>Verification</th>
-                    <th style={styles.th}>Active Status</th>
-                    <th style={styles.th}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {doctors.map((doc) => (
-                    <tr key={doc.id} style={styles.tr}>
-                      <td style={styles.td}>
-                        <div style={{ fontWeight: 600, color: '#1a1a1a' }}>{doc.full_name}</div>
-                        <div style={{ fontSize: 12, color: '#666' }}>{doc.clinic_name} ({doc.qualification})</div>
-                      </td>
-                      <td style={styles.td}>{doc.specialty_name || 'General'}</td>
-                      <td style={styles.td}>{doc.city}</td>
-                      <td style={styles.td}>${doc.consultation_fee}</td>
-                      <td style={styles.td}>
-                        <span
-                          style={{
-                            ...styles.badge,
-                            backgroundColor:
-                              doc.verification_status === 'VERIFIED'
-                                ? '#dcfce7'
-                                : doc.verification_status === 'PENDING'
-                                ? '#fef9c3'
-                                : '#fee2e2',
-                            color:
-                              doc.verification_status === 'VERIFIED'
-                                ? '#166534'
-                                : doc.verification_status === 'PENDING'
-                                ? '#854d0e'
-                                : '#991b1b',
-                          }}
-                        >
-                          {doc.verification_status}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <span style={{ color: doc.is_active ? '#166534' : '#991b1b', fontWeight: 600, fontSize: 13 }}>
-                          {doc.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        {!isSupportStaff ? (
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            {doc.verification_status !== 'VERIFIED' && (
-                              <button
-                                onClick={() => handleVerifyDoctor(doc.id, 'VERIFIED')}
-                                style={{ ...styles.actionBtn, background: '#166534', color: '#fff' }}
-                              >
-                                Verify
-                              </button>
-                            )}
-                            {doc.verification_status !== 'REJECTED' && (
-                              <button
-                                onClick={() => handleVerifyDoctor(doc.id, 'REJECTED')}
-                                style={{ ...styles.actionBtn, background: '#991b1b', color: '#fff' }}
-                              >
-                                Reject
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleToggleDoctorStatus(doc.id, doc.is_active)}
-                              style={{ ...styles.actionBtn, background: '#334155', color: '#fff' }}
-                            >
-                              {doc.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-                          </div>
-                        ) : (
-                          <span style={{ color: '#888', fontSize: 12 }}>Read-Only</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DoctorsManagement
+            onNotify={(msg, type) => (type === 'success' ? setSuccessMsg(msg) : setErrorMsg(msg))}
+            isSupportStaff={isSupportStaff}
+          />
         )}
 
         {/* TAB: PATIENTS */}
         {adminTab === 'patients' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <input
-                type="text"
-                placeholder="Search patient name or email..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && loadAdminData('patients')}
-                style={{ ...styles.input, width: 320 }}
-              />
-              <button onClick={() => loadAdminData('patients')} style={styles.secondaryButton}>
-                Search
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: selectedUser ? '1fr 380px' : '1fr', gap: 16 }}>
-              <div style={styles.card}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr style={styles.thRow}>
-                      <th style={styles.th}>Patient Name</th>
-                      <th style={styles.th}>Email</th>
-                      <th style={styles.th}>Role</th>
-                      <th style={styles.th}>Status</th>
-                      <th style={styles.th}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id} style={styles.tr}>
-                        <td style={styles.td}>
-                          <div style={{ fontWeight: 600 }}>{u.full_name}</div>
-                          <div style={{ fontSize: 12, color: '#666' }}>{u.phone || 'No phone'}</div>
-                        </td>
-                        <td style={styles.td}>{u.email}</td>
-                        <td style={styles.td}>
-                          <span style={styles.badge}>{u.role}</span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={{ color: u.is_active ? '#166534' : '#991b1b', fontWeight: 600 }}>
-                            {u.is_active ? 'Active' : 'Suspended'}
-                          </span>
-                        </td>
-                        <td style={styles.td}>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button
-                              onClick={() => handleViewUserDetail(u.id)}
-                              style={{ ...styles.actionBtn, background: '#0F5C5E', color: '#fff' }}
-                            >
-                              Metrics
-                            </button>
-                            {!isSupportStaff && (
-                              <button
-                                onClick={() => handleToggleUserStatus(u.id, u.is_active)}
-                                style={{
-                                  ...styles.actionBtn,
-                                  background: u.is_active ? '#991b1b' : '#166534',
-                                  color: '#fff',
-                                }}
-                              >
-                                {u.is_active ? 'Suspend' : 'Reactivate'}
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {selectedUser && (
-                <div style={{ ...styles.card, background: '#f8fafc' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, color: '#0F5C5E' }}>Operational Profile</h3>
-                    <button onClick={() => setSelectedUser(null)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>
-                      ✖
-                    </button>
-                  </div>
-                  <div style={{ fontSize: 13, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div><strong>Name:</strong> {selectedUser.full_name}</div>
-                    <div><strong>Email:</strong> {selectedUser.email}</div>
-                    <div><strong>Role:</strong> {selectedUser.role}</div>
-                    <div><strong>Status:</strong> {selectedUser.is_active ? 'Active' : 'Suspended'}</div>
-                    <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0' }} />
-                    <div style={{ fontWeight: 600, color: '#334155' }}>Activity Metrics:</div>
-                    <div>📄 <strong>Reports Uploaded:</strong> {selectedUser.summary_metrics?.reports_count || 0}</div>
-                    <div>📅 <strong>Appointments Booked:</strong> {selectedUser.summary_metrics?.appointments_count || 0}</div>
-                    <div>🩺 <strong>Symptom Logs:</strong> {selectedUser.summary_metrics?.symptom_logs_count || 0}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <PatientsManagement
+            onNotify={(msg, type) => (type === 'success' ? setSuccessMsg(msg) : setErrorMsg(msg))}
+            isSupportStaff={isSupportStaff}
+          />
         )}
 
         {/* TAB: APPOINTMENTS */}
@@ -1562,100 +1280,21 @@ export default function App() {
             </table>
           </div>
         )}
-      </div>
 
-      {/* MODAL: CREATE DOCTOR */}
-      {showCreateDoctorModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#0F5C5E' }}>Add New Doctor & Login Account</h3>
-            <form onSubmit={handleCreateDoctor} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <label style={styles.label}>Full Name</label>
-                <input
-                  type="text"
-                  value={newDoctor.full_name}
-                  onChange={(e) => setNewDoctor({ ...newDoctor, full_name: e.target.value })}
-                  required
-                  style={styles.input}
-                />
-              </div>
-              <div>
-                <label style={styles.label}>Email Address</label>
-                <input
-                  type="email"
-                  value={newDoctor.email}
-                  onChange={(e) => setNewDoctor({ ...newDoctor, email: e.target.value })}
-                  required
-                  style={styles.input}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={styles.label}>Specialty</label>
-                  <select
-                    value={newDoctor.specialty_id}
-                    onChange={(e) => setNewDoctor({ ...newDoctor, specialty_id: e.target.value })}
-                    required
-                    style={styles.select}
-                  >
-                    {specialties.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={styles.label}>Qualification</label>
-                  <input
-                    type="text"
-                    value={newDoctor.qualification}
-                    onChange={(e) => setNewDoctor({ ...newDoctor, qualification: e.target.value })}
-                    required
-                    style={styles.input}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={styles.label}>Clinic / Hospital</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Endocrine & Diabetology Clinic"
-                    value={newDoctor.clinic_name}
-                    onChange={(e) => setNewDoctor({ ...newDoctor, clinic_name: e.target.value })}
-                    style={styles.input}
-                  />
-                </div>
-                <div>
-                  <label style={styles.label}>City</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Ahmedabad"
-                    value={newDoctor.city}
-                    onChange={(e) => setNewDoctor({ ...newDoctor, city: e.target.value })}
-                    style={styles.input}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetDoctorForm();
-                    setShowCreateDoctorModal(false);
-                  }}
-                  style={styles.secondaryButton}
-                >
-                  Cancel
-                </button>
-                <button type="submit" style={styles.primaryButton}>
-                  Create Doctor
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+        {/* TAB: USER MANAGEMENT (SUPER ADMIN ONLY) */}
+        {adminTab === 'user_management' && (
+          <UserManagement
+            onNotify={(msg, type) => (type === 'success' ? setSuccessMsg(msg) : setErrorMsg(msg))}
+          />
+        )}
+
+        {/* TAB: AI TRACE & OBSERVABILITY (SUPER ADMIN ONLY) */}
+        {adminTab === 'ai_trace' && (
+          <AITraceView
+            onNotify={(msg, type) => (type === 'success' ? setSuccessMsg(msg) : setErrorMsg(msg))}
+          />
+        )}
+      </div>
 
       {/* MODAL: CREATE BIOMARKER */}
       {showBiomarkerModal && (

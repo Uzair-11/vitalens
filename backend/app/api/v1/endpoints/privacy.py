@@ -296,11 +296,12 @@ async def delete_patient_account(
     DPDP Right to Erasure: Soft-deletes user account, deactivates login,
     and immediately revokes all active refresh tokens.
     """
+    now = datetime.now(timezone.utc)
     current_user.is_active = False
     current_user.is_deleted = True
+    current_user.deleted_at = now
 
     # Revoke all active refresh tokens for this user
-    now = datetime.now(timezone.utc)
     token_q = select(RefreshToken).where(
         RefreshToken.user_id == current_user.id,
         RefreshToken.revoked_at.is_(None)

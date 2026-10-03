@@ -16,11 +16,15 @@ from app.models.appointment import Appointment
 from app.models.symptom_log import SymptomLog
 from app.schemas.user_schema import (
     UserRegister, UserLogin, PasswordResetRequest, TokenResponse, UserProfileResponse, UserProfileUpdate,
-    RefreshTokenRequest, RefreshTokenResponse
+    RefreshTokenRequest, RefreshTokenResponse,
+    SendEmailOTPRequest, VerifyEmailOTPRequest, ForgotPasswordRequestOTP, ForgotPasswordResetOTP
 )
 from app.services.user_service import (
     register_user, authenticate_user, refresh_user_token, revoke_user_refresh_token,
     get_user_profile, update_user_profile, reset_user_password
+)
+from app.services.otp_service import (
+    generate_and_send_email_otp, verify_email_otp, reset_password_with_otp
 )
 
 router = APIRouter()
@@ -30,10 +34,53 @@ get_current_user = get_current_user_obj
 
 @router.post("/register", response_model=UserProfileResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_in: UserRegister, db: AsyncSession = Depends(get_db)):
-    """Registers a new PATIENT user account."""
+    """Registers a new PATIENT user account and initiates email verification OTP."""
     user = await register_user(db, user_in)
     await record_audit_log(db, action="USER_REGISTER", resource_type="User", resource_id=user.id, actor_user_id=user.id)
+    try:
+        await generate_and_send_email_otp(db, user.email, purpose="EMAIL_VERIFICATION")
+    except Exception as e:
+        # Non-blocking if notification fails during initial registration
+        pass
     return user
+
+@router.post("/send-verification-otp")
+async def send_verification_otp(req: SendEmailOTPRequest, db: AsyncSession = Depends(get_db)):
+    """Sends a 6-digit profile verification OTP to the user's email address."""
+    res = await generate_and_send_email_otp(db, req.email, purpose=req.purpose or "EMAIL_VERIFICATION")
+    return res
+
+@router.post("/verify-email-otp")
+async def verify_email_otp_endpoint(req: VerifyEmailOTPRequest, db: AsyncSession = Depends(get_db)):
+    """Verifies the email OTP, marking the patient's profile and email as verified."""
+    await verify_email_otp(db, req.email, req.otp, purpose="EMAIL_VERIFICATION")
+    await record_audit_log(db, action="EMAIL_VERIFY_OTP", resource_type="User", resource_id=req.email, actor_user_id=req.email)
+    return {
+        "status": "SUCCESS",
+        "message": "Email verified successfully! Your VitaLens profile is now verified.",
+        "email_verified": True,
+        "is_verified": True
+    }
+
+@router.post("/forgot-password/request-otp")
+async def forgot_password_request_otp(req: ForgotPasswordRequestOTP, db: AsyncSession = Depends(get_db)):
+    """Generates and sends a 6-digit password reset OTP to the user's registered email."""
+    res = await generate_and_send_email_otp(db, req.email, purpose="PASSWORD_RESET")
+    return res
+
+@router.post("/forgot-password/verify-otp")
+async def forgot_password_verify_otp(req: VerifyEmailOTPRequest, db: AsyncSession = Depends(get_db)):
+    """Verifies that the password reset OTP is valid before setting a new password."""
+    # Note: Validates code without consuming it so the subsequent reset can consume it, or verify & consume
+    await verify_email_otp(db, req.email, req.otp, purpose="PASSWORD_RESET")
+    return {"status": "SUCCESS", "message": "OTP verified successfully. You may now enter your new password."}
+
+@router.post("/forgot-password/reset")
+async def forgot_password_reset(req: ForgotPasswordResetOTP, db: AsyncSession = Depends(get_db)):
+    """Resets the user's password using the verified 6-digit email OTP."""
+    await reset_password_with_otp(db, req.email, req.otp, req.new_password)
+    await record_audit_log(db, action="PASSWORD_RESET_OTP", resource_type="User", resource_id=req.email, actor_user_id=req.email)
+    return {"status": "SUCCESS", "message": "Password updated successfully. You can now log in."}
 
 @router.post("/login", response_model=TokenResponse)
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
@@ -67,8 +114,11 @@ async def logout(token_in: RefreshTokenRequest, db: AsyncSession = Depends(get_d
 
 @router.post("/reset-password")
 async def reset_password(req: PasswordResetRequest, db: AsyncSession = Depends(get_db)):
-    """Allows resetting password for an existing registered account."""
-    await reset_user_password(db, req.email, req.new_password)
+    """Allows resetting password for an existing registered account (with OTP if supplied)."""
+    if req.otp:
+        await reset_password_with_otp(db, req.email, req.otp, req.new_password)
+    else:
+        await reset_user_password(db, req.email, req.new_password)
     return {"status": "SUCCESS", "message": "Password updated successfully. You can now log in."}
 
 @router.get("/me", response_model=UserProfileResponse)

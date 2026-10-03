@@ -19,6 +19,7 @@ class UserLogin(BaseModel):
 class PasswordResetRequest(BaseModel):
     email: EmailStr
     new_password: str = Field(..., min_length=6, description="Password must be at least 6 characters")
+    otp: Optional[str] = None
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -48,6 +49,15 @@ class UserProfileResponse(BaseModel):
     emergency_contact: Optional[str] = None
     abha_number: Optional[str] = None
     avatar_url: Optional[str] = None
+    address_line1: Optional[str] = None
+    address_line2: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = "India"
+    is_verified: bool = False
+    email_verified: bool = False
+    phone_verified: bool = False
     is_active: bool = True
     created_at: Optional[datetime] = None
 
@@ -62,6 +72,28 @@ class UserProfileUpdate(BaseModel):
     emergency_contact: Optional[str] = None
     abha_number: Optional[str] = None
     avatar_url: Optional[str] = None
+    address_line1: Optional[str] = None
+    address_line2: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+
+class SendEmailOTPRequest(BaseModel):
+    email: EmailStr
+    purpose: Optional[str] = "EMAIL_VERIFICATION"  # EMAIL_VERIFICATION or PASSWORD_RESET
+
+class VerifyEmailOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+
+class ForgotPasswordRequestOTP(BaseModel):
+    email: EmailStr
+
+class ForgotPasswordResetOTP(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=6, description="Password must be at least 6 characters")
 
 class ABHALinkRequest(BaseModel):
     abha_number: str = Field(..., description="14-digit ABHA number, formatted e.g. 91-1234-5678-9012 or 14 digits")

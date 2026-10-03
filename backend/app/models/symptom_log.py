@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, Integer, Text, JSON, ForeignKey
+from sqlalchemy import Column, String, DateTime, Integer, Text, JSON, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -11,7 +11,7 @@ class SymptomLog(Base):
     __tablename__ = "symptom_logs"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
     report_id = Column(String(36), ForeignKey("medical_reports.id", ondelete="SET NULL"), nullable=True)
     primary_concern = Column(String(255), nullable=False)
     symptoms_list = Column(JSON, default=list)  # list of strings
@@ -19,6 +19,8 @@ class SymptomLog(Base):
     severity_score = Column(Integer, default=5)  # 1-10 scale
     body_region = Column(String(100), default="Whole Body")
     additional_notes = Column(Text, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     logged_at = Column(DateTime(timezone=True), default=utc_now)
 
     # Relationships

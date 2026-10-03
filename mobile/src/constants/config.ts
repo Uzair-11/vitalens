@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 // Automatically detect the dev machine IP from Expo's hostUri, with fallback
 // to active Wi-Fi LAN IP (192.168.1.3).
 // ──────────────────────────────────────────────────────────────────────────────
-const DEFAULT_DEV_IP = '192.168.1.3';
+const DEFAULT_DEV_IP = '192.168.1.17';
 
 const getDevMachineIP = (): string => {
   try {
@@ -45,7 +45,7 @@ const getBaseUrl = () => {
 export const API_CONFIG = {
   BASE_URL: getBaseUrl(),
   FALLBACK_URL: `http://${DEV_MACHINE_IP}:8000/api/v1`,
-  TIMEOUT_MS: 20000,
+  TIMEOUT_MS: 60000,
 };
 
 console.log(`[VitaLens Network Config] Platform: ${Platform.OS} | Host IP: ${DEV_MACHINE_IP} | Base URL: ${API_CONFIG.BASE_URL}`);

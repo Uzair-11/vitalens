@@ -7,7 +7,8 @@ from app.api.v1.endpoints.admin import (
     appointments as admin_appointments,
     content as admin_content,
     analytics as admin_analytics,
-    ai_review as admin_ai_review
+    ai_review as admin_ai_review,
+    ai_trace as admin_ai_trace
 )
 from app.api.v1.endpoints.doctor import (
     me as doctor_me,
@@ -38,6 +39,7 @@ api_router.include_router(admin_users.router, prefix="/admin/users", tags=["Admi
 api_router.include_router(admin_appointments.router, prefix="/admin/appointments", tags=["Admin Appointment Oversight"])
 api_router.include_router(admin_content.router, prefix="/admin/content", tags=["Admin Content & Thresholds"])
 api_router.include_router(admin_ai_review.router, prefix="/admin/ai-review", tags=["Admin AI Recommendation Review"])
+api_router.include_router(admin_ai_trace.router, prefix="/admin/ai-trace", tags=["Super Admin AI Trace & Observability"])
 
 # Doctor Portal Subrouters
 api_router.include_router(doctor_me.router, prefix="/doctor", tags=["Doctor Dashboard & Profile"])

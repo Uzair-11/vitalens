@@ -116,6 +116,29 @@ export const HomeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
+        {/* Unverified Email Alert Banner */}
+        {user && !user.email_verified && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ProfileTab', { screen: 'PersonalInformation' })}
+            style={styles.verificationNoticeCard}
+            activeOpacity={0.85}
+          >
+            <View style={styles.verificationNoticeIcon}>
+              <AlertCircle size={18} color="#B45309" />
+            </View>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.verificationNoticeTitle}>Verify your profile</Text>
+              <Text style={styles.verificationNoticeSubtitle}>
+                Complete email OTP verification to verify your profile.
+              </Text>
+            </View>
+            <View style={styles.verificationNoticeAction}>
+              <Text style={styles.verificationNoticeActionText}>Verify</Text>
+              <ChevronRight size={14} color="#B45309" />
+            </View>
+          </TouchableOpacity>
+        )}
+
         {/* Primary Feature Hero Card: Deep Teal */}
         <View style={styles.heroCard}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -325,6 +348,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: COLORS.primaryDark,
+  },
+  verificationNoticeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 16,
+  },
+  verificationNoticeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  verificationNoticeTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  verificationNoticeSubtitle: {
+    fontSize: 11,
+    color: '#B45309',
+    marginTop: 1,
+  },
+  verificationNoticeAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  verificationNoticeActionText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#B45309',
+    marginRight: 2,
   },
   heroCard: {
     backgroundColor: COLORS.primary,

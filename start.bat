@@ -17,7 +17,7 @@ echo   [4] Start Mobile Expo Only (Metro on http://localhost:8081)
 echo   [5] Start Mobile in Web Browser (Expo Web on http://localhost:8081)
 echo   [6] Start Admin Web Portal Only (Vite on http://localhost:3000)
 echo   [7] Install All Dependencies (pip + npm across all 3 services)
-echo   [8] Run Backend Health Check & Pytest Suite
+echo   [8] Run Backend Health Check and Pytest Suite
 echo   [9] Exit
 echo.
 echo ----------------------------------------------------------------------
@@ -93,7 +93,7 @@ echo.
 echo [1/3] Installing Root Dependencies...
 call npm install
 echo.
-echo [2/3] Installing Mobile & Admin NPM Dependencies...
+echo [2/3] Installing Mobile and Admin NPM Dependencies...
 call npm install --prefix mobile
 call npm install --prefix admin-web
 echo.

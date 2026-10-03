@@ -10,6 +10,15 @@ export interface User {
   emergency_contact?: string;
   avatar_url?: string;
   abha_number?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+  is_verified?: boolean;
+  email_verified?: boolean;
+  phone_verified?: boolean;
   created_at: string;
 }
 
@@ -36,7 +45,7 @@ export interface Biomarker {
   reference_min?: number;
   reference_max?: number;
   reference_text?: string;
-  flag: 'NORMAL' | 'HIGH' | 'LOW' | 'CRITICAL';
+  flag: 'NORMAL' | 'HIGH' | 'LOW' | 'CRITICAL' | 'CRITICAL_HIGH' | 'CRITICAL_LOW' | 'ABNORMAL' | string;
   category: string;
   clinical_interpretation?: string;
 }

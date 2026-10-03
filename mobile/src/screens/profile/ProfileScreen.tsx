@@ -12,6 +12,8 @@ import {
   Info,
   Heart,
   ShieldAlert,
+  CheckCircle2,
+  MapPin,
 } from 'lucide-react-native';
 import { Header } from '../../components/common/Header';
 import { useAuthStore } from '../../store/authStore';
@@ -55,7 +57,7 @@ export const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
       items: [
         {
           title: 'Personal Information',
-          subtitle: 'Name, email & verified mobile number',
+          subtitle: 'Identity, contact, address & verification',
           icon: User,
           iconBg: '#E0ECE7',
           iconColor: '#0F5C5E',
@@ -174,9 +176,32 @@ export const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
               <View style={[styles.roleBadge, { backgroundColor: roleStyle.bg }]}>
                 <Text style={[styles.roleBadgeText, { color: roleStyle.text }]}>{userRole}</Text>
               </View>
+              {user?.email_verified ? (
+                <View style={styles.verifiedStatusBadge}>
+                  <CheckCircle2 size={10} color="#166534" strokeWidth={2.5} style={{ marginRight: 3 }} />
+                  <Text style={styles.verifiedStatusText}>Verified</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('PersonalInformation')}
+                  style={styles.unverifiedStatusBadge}
+                  activeOpacity={0.8}
+                >
+                  <ShieldAlert size={10} color="#B45309" strokeWidth={2.5} style={{ marginRight: 3 }} />
+                  <Text style={styles.unverifiedStatusText}>Unverified</Text>
+                </TouchableOpacity>
+              )}
             </View>
             <Text style={styles.userEmail} numberOfLines={1}>{email}</Text>
             <Text style={styles.userPhone} numberOfLines={1}>{phone}</Text>
+            {user?.city ? (
+              <View style={styles.userLocationRow}>
+                <MapPin size={11} color="#64748B" style={{ marginRight: 4 }} />
+                <Text style={styles.userLocationText} numberOfLines={1}>
+                  {[user.city, user.state].filter(Boolean).join(', ')}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -315,6 +340,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#555555',
+  },
+  verifiedStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+  },
+  verifiedStatusText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#166534',
+    letterSpacing: 0.2,
+  },
+  unverifiedStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  unverifiedStatusText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#B45309',
+    letterSpacing: 0.2,
+  },
+  userLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  userLocationText: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '600',
   },
   // Section Headers & Lists
   sectionContainer: {

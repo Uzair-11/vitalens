@@ -15,6 +15,7 @@ class ReportAnalysis(Base):
     plain_summary = Column(Text, nullable=False)
     terminology_glossary = Column(JSON, default=list)  # list of {"term": "...", "definition": "..."}
     clinical_disclaimer = Column(Text, nullable=False)
+    model_version = Column(String(100), nullable=True)
     generated_at = Column(DateTime(timezone=True), default=utc_now)
 
     # Relationships

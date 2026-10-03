@@ -40,6 +40,19 @@ export const ProcessingReportScreen: React.FC<{ route: any; navigation: any }> =
         }, 3600);
       } catch (err: any) {
         clearInterval(interval);
+
+        // Resilient check: Did the backend finish processing despite a network/timeout blip?
+        try {
+          const finishedReport = await reportApi.getReportDetail(reportId);
+          if (finishedReport && finishedReport.status === 'COMPLETED') {
+            setActiveReport(finishedReport);
+            navigation.replace('ReportAnalysis', { reportId });
+            return;
+          }
+        } catch {
+          // Ignore secondary check errors and proceed to standard error alert
+        }
+
         const errData = err.response?.data;
         const msg = errData?.error?.message || errData?.detail || 'Analysis could not be completed.';
         if (msg.includes('Consent required') || msg.includes('REPORT_ANALYSIS')) {

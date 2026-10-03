@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -8,15 +8,21 @@ def utc_now():
     return datetime.now(timezone.utc)
 
 class ConsultationNote(Base):
+    """
+    Doctor's clinical consultation notes for an appointment encounter.
+    Clinical notes must outlive appointment cancellations/modifications (ondelete='RESTRICT').
+    """
     __tablename__ = "consultation_notes"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    appointment_id = Column(String(36), ForeignKey("appointments.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
-    doctor_id = Column(String(36), ForeignKey("doctors.id", ondelete="CASCADE"), nullable=False, index=True)
+    appointment_id = Column(String(36), ForeignKey("appointments.id", ondelete="RESTRICT"), nullable=False, unique=True, index=True)
+    doctor_id = Column(String(36), ForeignKey("doctors.id", ondelete="RESTRICT"), nullable=False, index=True)
     diagnosis = Column(String(255), nullable=True)
     clinical_notes = Column(Text, nullable=False)
     prescriptions = Column(Text, nullable=True)
     follow_up_recommendation = Column(String(255), nullable=True)
+    is_finalized = Column(Boolean, default=False, nullable=False)
+    finalized_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 

@@ -19,6 +19,10 @@ class CreateDoctorAdminRequest(BaseModel):
     email: EmailStr
     temporary_password: Optional[str] = None
     full_name: str
+    phone: Optional[str] = None
+    registration_number: Optional[str] = None
+    registration_council: Optional[str] = None
+    state_code: Optional[str] = None
     specialty_id: str
     qualification: str
     experience_years: int
@@ -32,6 +36,10 @@ class CreateDoctorAdminRequest(BaseModel):
 
 class UpdateDoctorAdminRequest(BaseModel):
     full_name: Optional[str] = None
+    phone: Optional[str] = None
+    registration_number: Optional[str] = None
+    registration_council: Optional[str] = None
+    state_code: Optional[str] = None
     qualification: Optional[str] = None
     experience_years: Optional[int] = None
     clinic_name: Optional[str] = None
@@ -71,6 +79,7 @@ async def create_doctor_account(
         hashed_password=hashed_pwd,
         role="DOCTOR",
         full_name=data.full_name,
+        phone=data.phone,
         is_active=True
     )
     db.add(doctor_user)
@@ -82,6 +91,11 @@ async def create_doctor_account(
         specialty_id=data.specialty_id,
         full_name=data.full_name,
         qualification=data.qualification,
+        registration_number=data.registration_number,
+        registration_council=data.registration_council,
+        state_code=data.state_code,
+        email=data.email,
+        phone=data.phone,
         experience_years=data.experience_years,
         clinic_name=data.clinic_name,
         address=data.address,
@@ -109,6 +123,8 @@ async def create_doctor_account(
         "doctor_id": doctor.id,
         "user_id": doctor_user.id,
         "email": doctor_user.email,
+        "phone": doctor.phone,
+        "registration_number": doctor.registration_number,
         "full_name": doctor.full_name,
         "verification_status": doctor.verification_status,
         "temporary_password": temp_password if not data.temporary_password else "[USER_PROVIDED]",
@@ -125,7 +141,7 @@ async def list_doctors_admin(
     db: AsyncSession = Depends(get_db)
 ):
     """Admin lists all doctors with search and filtering."""
-    q = select(Doctor).options(selectinload(Doctor.specialty))
+    q = select(Doctor).options(selectinload(Doctor.specialty), selectinload(Doctor.user))
     if name:
         q = q.where(Doctor.full_name.ilike(f"%{name}%"))
     if specialty_id:
@@ -142,13 +158,21 @@ async def list_doctors_admin(
             "id": d.id,
             "user_id": d.user_id,
             "full_name": d.full_name,
+            "email": d.email or (d.user.email if d.user else None),
+            "phone": d.phone or (d.user.phone if d.user else None),
+            "registration_number": d.registration_number,
+            "registration_council": d.registration_council,
+            "state_code": d.state_code,
             "specialty_id": d.specialty_id,
             "specialty_name": d.specialty.name if d.specialty else None,
             "qualification": d.qualification,
             "experience_years": d.experience_years,
             "clinic_name": d.clinic_name,
+            "address": d.address,
             "city": d.city,
             "consultation_fee": d.consultation_fee,
+            "bio": d.bio,
+            "languages": d.languages,
             "verification_status": d.verification_status,
             "credential_documents": d.credential_documents,
             "is_active": d.is_active,
@@ -229,3 +253,34 @@ async def toggle_doctor_status(
         actor_user_id=current_admin.id, metadata={"is_active": is_active}
     )
     return {"doctor_id": doctor.id, "is_active": doctor.is_active}
+
+@router.delete("/{doctor_id}")
+async def delete_doctor(
+    doctor_id: str,
+    current_admin: User = Depends(require_role("ADMIN", "SUPER_ADMIN")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Admin removes doctor profile record."""
+    q = select(Doctor).where(Doctor.id == doctor_id)
+    res = await db.execute(q)
+    doctor = res.scalars().first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found.")
+
+    user_id = doctor.user_id
+    doctor_name = doctor.full_name
+    await db.delete(doctor)
+
+    if user_id:
+        user_res = await db.execute(select(User).where(User.id == user_id))
+        user_obj = user_res.scalars().first()
+        if user_obj and user_obj.role == "DOCTOR":
+            user_obj.is_active = False
+            user_obj.is_deleted = True
+
+    await db.commit()
+    await record_audit_log(
+        db, action="DELETE_DOCTOR", resource_type="Doctor", resource_id=doctor_id,
+        actor_user_id=current_admin.id, metadata={"doctor_name": doctor_name, "user_id": user_id}
+    )
+    return {"status": "SUCCESS", "message": f"Doctor {doctor_name} removed successfully."}

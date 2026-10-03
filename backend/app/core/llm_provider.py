@@ -92,11 +92,11 @@ class DeterministicClinicalRAGProvider(LLMProvider):
                     "report_date": str(b.get("report_date", "Recent"))
                 })
 
-                if flag == "HIGH":
+                if "HIGH" in flag or flag == "CRITICAL":
                     answers.append(
                         f"For **{b.get('test_name')}**: Your report records **{val} {unit}**, which is elevated above the normal reference range ({ref} {unit})."
                     )
-                elif flag == "LOW":
+                elif "LOW" in flag:
                     answers.append(
                         f"For **{b.get('test_name')}**: Your report records **{val} {unit}**, which is below the normal reference range ({ref} {unit})."
                     )
@@ -109,7 +109,7 @@ class DeterministicClinicalRAGProvider(LLMProvider):
             final_text = "\n\n".join(answers)
             confidence = 0.95
         elif any(k in q_lower for k in ["abnormal", "out of range", "flag", "high", "low", "bad"]):
-            abnormals = [b for b in structured_biomarkers if b.get("flag") in ["HIGH", "LOW", "CRITICAL"]]
+            abnormals = [b for b in structured_biomarkers if b.get("flag") and b.get("flag") != "NORMAL"]
             if abnormals:
                 for ab in abnormals:
                     matched_citations.append({

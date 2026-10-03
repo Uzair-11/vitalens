@@ -23,8 +23,8 @@ EXPLANATION_BANK = [
     {"test": "White Blood Cell (WBC)", "flag": "LOW", "explanation": "A low white blood cell count may reduce the body's ability to fight infection. Common causes include viral infections, certain medications, autoimmune conditions, or bone marrow issues."},
     {"test": "Red Blood Cell (RBC)", "flag": "HIGH", "explanation": "An elevated red blood cell count can relate to dehydration, smoking, lung disease, or conditions that overproduce red blood cells."},
     {"test": "Red Blood Cell (RBC)", "flag": "LOW", "explanation": "A low red blood cell count often points to anemia, blood loss, nutritional deficiencies, or chronic disease."},
-    {"test": "Hemoglobin", "flag": "LOW", "explanation": "Low hemoglobin suggests anemia, which can result from iron deficiency, blood loss, chronic disease, or nutritional deficiencies. It often causes fatigue and weakness."},
-    {"test": "Hemoglobin", "flag": "HIGH", "explanation": "Elevated hemoglobin can occur with dehydration, smoking, living at high altitude, or conditions that increase red blood cell production."},
+    {"test": "Hemoglobin (Hb)", "flag": "LOW", "explanation": "Low hemoglobin suggests anemia, which can result from iron deficiency, blood loss, chronic disease, or nutritional deficiencies. It often causes fatigue and weakness."},
+    {"test": "Hemoglobin (Hb)", "flag": "HIGH", "explanation": "Elevated hemoglobin can occur with dehydration, smoking, living at high altitude, or conditions that increase red blood cell production."},
     {"test": "Hematocrit", "flag": "HIGH", "explanation": "A high hematocrit can reflect dehydration, smoking, lung disease, or conditions causing excess red blood cell production."},
     {"test": "Hematocrit", "flag": "LOW", "explanation": "A low hematocrit often indicates anemia, blood loss, or a nutritional deficiency affecting red blood cell production."},
     {"test": "Platelets", "flag": "LOW", "explanation": "A low platelet count (thrombocytopenia) can increase bruising and bleeding risk. Causes range from viral infections and certain medications to bone marrow conditions or autoimmune disorders. Mild reductions are often transient and warrant repeat testing."},
@@ -67,8 +67,8 @@ EXPLANATION_BANK = [
     {"test": "Iron", "flag": "HIGH", "explanation": "High serum iron can occur with iron overload conditions, liver disease, or excessive iron supplementation."},
 
     # HbA1c
-    {"test": "HbA1c", "flag": "HIGH", "explanation": "Elevated HbA1c reflects higher average blood sugar over the past 2-3 months and is used to diagnose or monitor prediabetes and diabetes."},
-    {"test": "HbA1c", "flag": "LOW", "explanation": "Low HbA1c is uncommon and can relate to conditions affecting red blood cell lifespan, or very tightly controlled/low average blood sugar."},
+    {"test": "Glycated Hemoglobin (HbA1c)", "flag": "HIGH", "explanation": "Elevated HbA1c reflects higher average blood sugar over the past 2-3 months and is used to diagnose or monitor prediabetes and diabetes."},
+    {"test": "Glycated Hemoglobin (HbA1c)", "flag": "LOW", "explanation": "Low HbA1c is uncommon and can relate to conditions affecting red blood cell lifespan, or very tightly controlled/low average blood sugar."},
 
     # Liver Panel
     {"test": "ALT (Alanine Aminotransferase)", "flag": "HIGH", "explanation": "Elevated ALT is a common marker of liver cell stress or damage, which can result from fatty liver, alcohol use, certain medications, or viral hepatitis."},
@@ -85,6 +85,52 @@ RETRIEVAL_THRESHOLD = 0.65  # validated: correctly rejects unrelated matches
 _embedder = None
 _bank_embeddings = None
 _embedder_available = None
+_EXPLANATION_CACHE: Optional[List[Dict[str, str]]] = None
+
+
+def invalidate_explanation_cache():
+    """Invalidates explanation cache when explanations are modified in DB."""
+    global _EXPLANATION_CACHE, _bank_embeddings
+    _EXPLANATION_CACHE = None
+    _bank_embeddings = None
+
+
+def load_explanations_from_db_sync() -> List[Dict[str, str]]:
+    """
+    Queries biomarker_explanations directly from the database table.
+    Falls back gracefully to EXPLANATION_BANK if the DB table is empty or offline.
+    """
+    global _EXPLANATION_CACHE
+    if _EXPLANATION_CACHE is not None:
+        return _EXPLANATION_CACHE
+
+    db_url = os.getenv("TEST_DATABASE_URL") or settings.DATABASE_URL
+    if "asyncpg" in db_url:
+        sync_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+    elif "aiosqlite" in db_url:
+        sync_url = db_url.replace("sqlite+aiosqlite:///", "sqlite:///")
+    else:
+        sync_url = db_url
+
+    try:
+        from app.models.biomarker_explanation import BiomarkerExplanation
+        from sqlalchemy.orm import Session
+        sync_engine = create_engine(sync_url)
+        with Session(sync_engine) as session:
+            rows = session.query(BiomarkerExplanation).all()
+            if rows:
+                _EXPLANATION_CACHE = [
+                    {"test": r.test_name or r.canonical_name, "flag": r.flag, "explanation": r.explanation_text}
+                    for r in rows
+                ]
+                sync_engine.dispose()
+                return _EXPLANATION_CACHE
+            sync_engine.dispose()
+    except Exception as e:
+        pass
+
+    _EXPLANATION_CACHE = EXPLANATION_BANK
+    return _EXPLANATION_CACHE
 
 
 def _get_embedder():
@@ -96,7 +142,8 @@ def _get_embedder():
         try:
             from sentence_transformers import SentenceTransformer
             _embedder = SentenceTransformer('all-MiniLM-L6-v2')
-            bank_texts = [f"{ex['test']} is {ex['flag']}" for ex in EXPLANATION_BANK]
+            bank = load_explanations_from_db_sync()
+            bank_texts = [f"{ex['test']} is {ex['flag']}" for ex in bank]
             _bank_embeddings = _embedder.encode(bank_texts, convert_to_tensor=True)
             _embedder_available = True
         except Exception as e:
@@ -109,12 +156,57 @@ def _get_embedder():
 
 def retrieve_explanation(test_name: str, flag: str, threshold: float = RETRIEVAL_THRESHOLD) -> Tuple[str, float]:
     """
-    Finds the closest-matching pre-written explanation by embedding similarity.
-    If SentenceTransformer is blocked or unavailable, uses high-accuracy medical keyword matching.
+    Finds the closest-matching pre-written explanation by embedding similarity or keyword fallback.
+    Reads from the database-backed biomarker_explanations table when available.
     """
     flag_str = str(flag).upper()
     norm_flag = "HIGH" if "HIGH" in flag_str else ("LOW" if "LOW" in flag_str else flag_str)
+    bank = load_explanations_from_db_sync()
 
+    norm_test = test_name.lower().strip()
+    norm_test_tokens = set(re.findall(r"\w+", norm_test))
+
+    # Step 1: Explicit Medical Disambiguation & Exact Token Matching
+    for item in bank:
+        bank_test = item["test"].lower()
+        bank_flag = item["flag"].upper()
+
+        if bank_flag != norm_flag:
+            continue
+
+        # 1. Disambiguate HbA1c vs Hemoglobin
+        if ("hba1c" in norm_test or "glycated" in norm_test or "a1c" in norm_test):
+            if "hba1c" in bank_test or "glycated" in bank_test or "a1c" in bank_test:
+                return item["explanation"], 1.0
+            continue
+        elif "hemoglobin" in norm_test and ("hba1c" in bank_test or "glycated" in bank_test or "a1c" in bank_test):
+            continue
+
+        # 2. Extract abbreviations and clean tokens
+        abbrevs = [a.lower().strip() for a in re.findall(r"\((.*?)\)", bank_test)]
+        clean_bank = re.sub(r"\(.*?\)", "", bank_test).lower().strip()
+        bank_tokens = set(re.findall(r"\w+", clean_bank))
+
+        # Check exact string match
+        if norm_test == bank_test or clean_bank == norm_test:
+            return item["explanation"], 1.0
+
+        # Check whole-word abbreviation match (e.g. "AST", "ALT", "WBC", "RBC", "TSH")
+        for abbr in abbrevs:
+            if abbr == norm_test or re.search(r"\b" + re.escape(abbr) + r"\b", norm_test):
+                return item["explanation"], 1.0
+
+        # Check if clean_bank tokens are a subset (e.g. {"glucose", "fasting"} is subset of {"fasting", "blood", "glucose"})
+        significant_bank_tokens = {t for t in bank_tokens if len(t) > 2}
+        if significant_bank_tokens and significant_bank_tokens.issubset(norm_test_tokens):
+            return item["explanation"], 0.98
+
+        # Inverse subset check (e.g. norm_test tokens {"total", "cholesterol"} is subset of bank {"total", "cholesterol", ...})
+        significant_test_tokens = {t for t in norm_test_tokens if len(t) > 2}
+        if significant_test_tokens and significant_test_tokens.issubset(set(re.findall(r"\w+", bank_test))):
+            return item["explanation"], 0.98
+
+    # Step 2: Dense Semantic Embedding Retrieval
     embedder, bank_embeddings = _get_embedder()
     if embedder is not None and bank_embeddings is not None:
         try:
@@ -127,36 +219,22 @@ def retrieve_explanation(test_name: str, flag: str, threshold: float = RETRIEVAL
             best_score = similarities[best_idx].item()
 
             if best_score >= threshold:
-                return EXPLANATION_BANK[best_idx]["explanation"], best_score
+                return bank[best_idx]["explanation"], best_score
             return (f"No confident match found (similarity: {best_score:.2f}) "
                     f"— flagging for manual review."), best_score
         except Exception as e:
             print(f"[!] Embedding calculation failed ({e}), falling back to direct match.")
 
-    # High-accuracy direct & synonym keyword fallback
-    norm_test = test_name.lower().strip()
+    # Step 3: Fuzzy token overlap fallback
     best_candidate = None
     best_score = 0.0
-
-    for item in EXPLANATION_BANK:
+    for item in bank:
         bank_test = item["test"].lower()
         bank_flag = item["flag"].upper()
-
         if bank_flag != norm_flag:
             continue
-
-        abbrevs = re.findall(r"\((.*?)\)", bank_test)
-        clean_bank = re.sub(r"\(.*?\)", "", bank_test).strip()
-
-        if (norm_test in bank_test or
-            bank_test in norm_test or
-            clean_bank in norm_test or
-            any(abbr.lower() == norm_test or f" {abbr.lower()} " in f" {norm_test} " for abbr in abbrevs)):
-            return item["explanation"], 0.95
-
-        test_words = set(re.findall(r"\w+", norm_test))
         bank_words = set(re.findall(r"\w+", bank_test))
-        overlap = len(test_words & bank_words) / max(len(test_words), len(bank_words), 1)
+        overlap = len(norm_test_tokens & bank_words) / max(len(norm_test_tokens), len(bank_words), 1)
         if overlap > best_score:
             best_score = overlap
             best_candidate = item

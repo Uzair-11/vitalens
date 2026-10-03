@@ -108,18 +108,25 @@ async def analyze_report(db: AsyncSession, user_id: str, report_id: str) -> Medi
         # Save extracted biomarker records
         saved_biomarkers = []
         for b_data in extracted_biomarkers:
+            unit_val = (b_data.get("unit") or "")[:45] if b_data.get("unit") else None
+            val_text = str(b_data.get("value_text") or "")[:95] if b_data.get("value_text") is not None else None
+            ref_text = str(b_data.get("reference_text") or "")[:95] if b_data.get("reference_text") is not None else None
+            test_name_val = str(b_data.get("test_name") or "")[:95]
+            canon_name_val = str(b_data.get("canonical_name") or "")[:95]
+            category_val = str(b_data.get("category") or "General Panel")[:95]
+
             biomarker = Biomarker(
                 report_id=report.id,
-                test_name=b_data["test_name"],
-                canonical_name=b_data["canonical_name"],
+                test_name=test_name_val,
+                canonical_name=canon_name_val,
                 value_numeric=b_data.get("value_numeric"),
-                value_text=b_data.get("value_text"),
-                unit=b_data.get("unit"),
+                value_text=val_text,
+                unit=unit_val,
                 reference_min=b_data.get("reference_min"),
                 reference_max=b_data.get("reference_max"),
-                reference_text=b_data.get("reference_text"),
+                reference_text=ref_text,
                 flag=b_data.get("flag", "NORMAL"),
-                category=b_data.get("category", "General Panel")
+                category=category_val
             )
             db.add(biomarker)
             saved_biomarkers.append(b_data)
@@ -198,8 +205,15 @@ async def analyze_report(db: AsyncSession, user_id: str, report_id: str) -> Medi
         return await get_report_detail(db, user_id, report_id)
 
     except Exception as e:
-        report.status = "FAILED"
-        await db.commit()
+        await db.rollback()
+        try:
+            report_res = await db.execute(select(MedicalReport).where(MedicalReport.id == report_id))
+            rep = report_res.scalars().first()
+            if rep:
+                rep.status = "FAILED"
+                await db.commit()
+        except Exception:
+            pass
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Report analysis failed: {str(e)}"

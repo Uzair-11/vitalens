@@ -13,7 +13,8 @@ class BiomarkerSchema(BaseModel):
     reference_max: Optional[float] = None
     reference_text: Optional[str] = None
     flag: str = "NORMAL"
-    category: str = "General"
+    category: Optional[str] = "General"
+    clinical_interpretation: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

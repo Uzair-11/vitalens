@@ -1,0 +1,296 @@
+{
+  "TEST A": {
+    "1. All Abnormalities": {
+      "winner": "Gastroenterology",
+      "confidence": 0.32,
+      "probabilities": {
+        "Gastroenterology": 0.3167,
+        "Endocrinology": 0.2548,
+        "Neurology": 0.2203,
+        "Hematology": 0.1325,
+        "Pulmonology": 0.0334,
+        "Cardiology": 0.0134,
+        "General Medicine": 0.0109,
+        "Orthopedics": 0.0095,
+        "Nephrology": 0.0066,
+        "Dermatology": 0.0019
+      }
+    },
+    "2. Bilirubin Removed": {
+      "winner": "Endocrinology",
+      "confidence": 0.76,
+      "probabilities": {
+        "Endocrinology": 0.765,
+        "Neurology": 0.1132,
+        "General Medicine": 0.03,
+        "Hematology": 0.0243,
+        "Gastroenterology": 0.0234,
+        "Pulmonology": 0.0181,
+        "Cardiology": 0.0157,
+        "Nephrology": 0.0054,
+        "Dermatology": 0.0031,
+        "Orthopedics": 0.0019
+      }
+    },
+    "3. Thyroid Removed": {
+      "winner": "Hematology",
+      "confidence": 0.81,
+      "probabilities": {
+        "Hematology": 0.809,
+        "Neurology": 0.1168,
+        "Pulmonology": 0.0258,
+        "General Medicine": 0.0211,
+        "Gastroenterology": 0.008,
+        "Cardiology": 0.0069,
+        "Endocrinology": 0.0058,
+        "Orthopedics": 0.0044,
+        "Nephrology": 0.0018,
+        "Dermatology": 0.0004
+      }
+    },
+    "4. Hematology Removed": {
+      "winner": "Endocrinology",
+      "confidence": 0.52,
+      "probabilities": {
+        "Endocrinology": 0.5223,
+        "Neurology": 0.1822,
+        "Orthopedics": 0.1419,
+        "Gastroenterology": 0.0999,
+        "Cardiology": 0.0176,
+        "Nephrology": 0.0132,
+        "General Medicine": 0.0094,
+        "Hematology": 0.0078,
+        "Dermatology": 0.0038,
+        "Pulmonology": 0.0018
+      }
+    },
+    "5. Thyroid-Only": {
+      "winner": "Endocrinology",
+      "confidence": 0.97,
+      "probabilities": {
+        "Endocrinology": 0.9697,
+        "General Medicine": 0.0105,
+        "Neurology": 0.0079,
+        "Cardiology": 0.0034,
+        "Gastroenterology": 0.0022,
+        "Nephrology": 0.0019,
+        "Hematology": 0.0018,
+        "Dermatology": 0.0014,
+        "Orthopedics": 0.0008,
+        "Pulmonology": 0.0005
+      }
+    },
+    "6. Currently-Supported Hematology-Only": {
+      "winner": "Hematology",
+      "confidence": 0.78,
+      "probabilities": {
+        "Hematology": 0.7785,
+        "General Medicine": 0.1591,
+        "Neurology": 0.038,
+        "Pulmonology": 0.0111,
+        "Endocrinology": 0.0036,
+        "Nephrology": 0.0031,
+        "Gastroenterology": 0.0024,
+        "Cardiology": 0.002,
+        "Orthopedics": 0.0015,
+        "Dermatology": 0.0008
+      }
+    }
+  },
+  "TEST B": {
+    "1. All Abnormalities": {
+      "winner": "Endocrinology",
+      "confidence": 0.87,
+      "probabilities": {
+        "Endocrinology": 0.8689,
+        "Hematology": 0.0682,
+        "Gastroenterology": 0.0387,
+        "Neurology": 0.0068,
+        "Cardiology": 0.0063,
+        "Nephrology": 0.0043,
+        "Pulmonology": 0.0028,
+        "Orthopedics": 0.0024,
+        "General Medicine": 0.0009,
+        "Dermatology": 0.0008
+      }
+    },
+    "2. Bilirubin Removed": {
+      "winner": "Endocrinology",
+      "confidence": 0.99,
+      "probabilities": {
+        "Endocrinology": 0.9912,
+        "Hematology": 0.0033,
+        "Cardiology": 0.0019,
+        "Gastroenterology": 0.0012,
+        "Neurology": 0.0007,
+        "Nephrology": 0.0007,
+        "Dermatology": 0.0003,
+        "Pulmonology": 0.0003,
+        "General Medicine": 0.0003,
+        "Orthopedics": 0.0001
+      }
+    },
+    "3. Thyroid Removed": {
+      "winner": "Hematology",
+      "confidence": 0.98,
+      "probabilities": {
+        "Hematology": 0.9798,
+        "Endocrinology": 0.0052,
+        "Neurology": 0.0036,
+        "Pulmonology": 0.0033,
+        "Cardiology": 0.0026,
+        "Gastroenterology": 0.002,
+        "General Medicine": 0.0016,
+        "Orthopedics": 0.0008,
+        "Nephrology": 0.0008,
+        "Dermatology": 0.0002
+      }
+    },
+    "4. Hematology Removed": {
+      "winner": "Endocrinology",
+      "confidence": 0.98,
+      "probabilities": {
+        "Endocrinology": 0.9765,
+        "Gastroenterology": 0.0076,
+        "Orthopedics": 0.0055,
+        "Nephrology": 0.0033,
+        "Cardiology": 0.0024,
+        "Neurology": 0.0021,
+        "Hematology": 0.0019,
+        "Dermatology": 0.0004,
+        "General Medicine": 0.0003,
+        "Pulmonology": 0.0001
+      }
+    },
+    "5. Thyroid-Only": {
+      "winner": "Endocrinology",
+      "confidence": 1.0,
+      "probabilities": {
+        "Endocrinology": 0.9992,
+        "Cardiology": 0.0002,
+        "Hematology": 0.0002,
+        "Gastroenterology": 0.0001,
+        "Nephrology": 0.0001,
+        "Dermatology": 0.0001,
+        "Neurology": 0.0001,
+        "General Medicine": 0.0,
+        "Orthopedics": 0.0,
+        "Pulmonology": 0.0
+      }
+    },
+    "6. Currently-Supported Hematology-Only": {
+      "winner": "Hematology",
+      "confidence": 0.99,
+      "probabilities": {
+        "Hematology": 0.9918,
+        "General Medicine": 0.0025,
+        "Endocrinology": 0.002,
+        "Neurology": 0.0009,
+        "Pulmonology": 0.0007,
+        "Nephrology": 0.0006,
+        "Gastroenterology": 0.0005,
+        "Cardiology": 0.0005,
+        "Dermatology": 0.0003,
+        "Orthopedics": 0.0003
+      }
+    }
+  },
+  "TEST C": {
+    "1. All Abnormalities": {
+      "winner": "Endocrinology",
+      "confidence": 0.44,
+      "probabilities": {
+        "Endocrinology": 0.4352,
+        "Gastroenterology": 0.3501,
+        "Hematology": 0.0971,
+        "Pulmonology": 0.0478,
+        "Cardiology": 0.021,
+        "Nephrology": 0.0139,
+        "Neurology": 0.0134,
+        "Orthopedics": 0.0114,
+        "General Medicine": 0.007,
+        "Dermatology": 0.0029
+      }
+    },
+    "2. Bilirubin Removed": {
+      "winner": "Endocrinology",
+      "confidence": 0.9,
+      "probabilities": {
+        "Endocrinology": 0.8965,
+        "Cardiology": 0.0208,
+        "Gastroenterology": 0.0198,
+        "Pulmonology": 0.017,
+        "Hematology": 0.0151,
+        "General Medicine": 0.0098,
+        "Neurology": 0.008,
+        "Dermatology": 0.0067,
+        "Nephrology": 0.005,
+        "Orthopedics": 0.0013
+      }
+    },
+    "3. Thyroid Removed": {
+      "winner": "Hematology",
+      "confidence": 0.93,
+      "probabilities": {
+        "Hematology": 0.9327,
+        "Pulmonology": 0.0226,
+        "General Medicine": 0.0097,
+        "Neurology": 0.009,
+        "Cardiology": 0.0088,
+        "Gastroenterology": 0.0074,
+        "Endocrinology": 0.0039,
+        "Nephrology": 0.0029,
+        "Orthopedics": 0.0026,
+        "Dermatology": 0.0006
+      }
+    },
+    "4. Hematology Removed": {
+      "winner": "Endocrinology",
+      "confidence": 0.57,
+      "probabilities": {
+        "Endocrinology": 0.5721,
+        "Orthopedics": 0.2556,
+        "Gastroenterology": 0.0882,
+        "Nephrology": 0.0301,
+        "Cardiology": 0.0214,
+        "Neurology": 0.0174,
+        "Hematology": 0.0054,
+        "Dermatology": 0.0047,
+        "General Medicine": 0.0035,
+        "Pulmonology": 0.0016
+      }
+    },
+    "5. Thyroid-Only": {
+      "winner": "Endocrinology",
+      "confidence": 0.99,
+      "probabilities": {
+        "Endocrinology": 0.986,
+        "Dermatology": 0.0034,
+        "Cardiology": 0.0025,
+        "General Medicine": 0.0019,
+        "Nephrology": 0.0018,
+        "Gastroenterology": 0.0012,
+        "Hematology": 0.0012,
+        "Orthopedics": 0.0009,
+        "Neurology": 0.0009,
+        "Pulmonology": 0.0002
+      }
+    },
+    "6. Currently-Supported Hematology-Only": {
+      "winner": "Hematology",
+      "confidence": 0.9,
+      "probabilities": {
+        "Hematology": 0.8952,
+        "General Medicine": 0.0771,
+        "Pulmonology": 0.0103,
+        "Nephrology": 0.004,
+        "Dermatology": 0.0031,
+        "Neurology": 0.0031,
+        "Gastroenterology": 0.0023,
+        "Endocrinology": 0.0021,
+        "Cardiology": 0.0019,
+        "Orthopedics": 0.0008
+      }
+    }
+  }
+}

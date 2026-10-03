@@ -11,6 +11,8 @@ from app.models.doctor_availability import DoctorAvailability
 from app.models.user import User
 from app.models.consent import Consent
 from app.models.content import BiomarkerReference, GlossaryTerm
+from app.models.biomarker_explanation import BiomarkerExplanation
+from app.ml.explainer_ai import EXPLANATION_BANK
 from app.core.security import get_password_hash
 from app.core.config import settings
 
@@ -306,7 +308,17 @@ BIOMARKER_SEED = [
     {"test_name": "Free T4", "canonical_name": "Free T4", "category": "Thyroid Panel", "default_unit": "ng/dL", "ref_min": 0.8, "ref_max": 1.8, "critical_low": 0.3, "critical_high": 3.5},
     {"test_name": "Ferritin", "canonical_name": "Ferritin", "category": "Iron Studies", "default_unit": "ng/mL", "ref_min": 15.0, "ref_max": 150.0, "critical_low": 5.0, "critical_high": 1000.0},
     {"test_name": "Iron", "canonical_name": "Iron", "category": "Iron Studies", "default_unit": "ug/dL", "ref_min": 50.0, "ref_max": 170.0, "critical_low": 20.0, "critical_high": 300.0},
-    {"test_name": "Total Bilirubin", "canonical_name": "Bilirubin, Total", "category": "Liver Function", "default_unit": "mg/dL", "ref_min": 0.1, "ref_max": 1.2, "critical_low": 0.0, "critical_high": 15.0},
+    {"test_name": "Total Bilirubin", "canonical_name": "Bilirubin, Total", "category": "Liver Function", "default_unit": "mg/dL", "ref_min": 0.1, "ref_max": 1.2, "critical_low": 0.0, "critical_high": 15.0, "synonyms": ["bilirubin, total", "total bilirubin", "serum bilirubin", "bilirubin"]},
+    {"test_name": "Sodium", "canonical_name": "Sodium", "category": "Comprehensive Metabolic Panel", "default_unit": "mEq/L", "ref_min": 135.0, "ref_max": 145.0, "critical_low": 120.0, "critical_high": 160.0, "synonyms": ["sodium", "serum sodium", "na", "na+", "s. sodium"]},
+    {"test_name": "Potassium", "canonical_name": "Potassium", "category": "Comprehensive Metabolic Panel", "default_unit": "mEq/L", "ref_min": 3.5, "ref_max": 5.1, "critical_low": 2.8, "critical_high": 6.2, "synonyms": ["potassium", "serum potassium", "k", "k+", "s. potassium"]},
+    {"test_name": "Chloride", "canonical_name": "Chloride", "category": "Comprehensive Metabolic Panel", "default_unit": "mEq/L", "ref_min": 96.0, "ref_max": 106.0, "critical_low": 80.0, "critical_high": 120.0, "synonyms": ["chloride", "serum chloride", "cl", "cl-", "s. chloride"]},
+    {"test_name": "Calcium", "canonical_name": "Calcium", "category": "Comprehensive Metabolic Panel", "default_unit": "mg/dL", "ref_min": 8.5, "ref_max": 10.2, "critical_low": 6.5, "critical_high": 13.0, "synonyms": ["calcium", "serum calcium", "ca", "total calcium", "ca++", "s. calcium"]},
+    {"test_name": "Urine Protein", "canonical_name": "Urine Protein", "category": "Urinalysis", "default_unit": "mg/dL", "ref_min": 0.0, "ref_max": 14.0, "critical_low": None, "critical_high": 300.0, "synonyms": ["urine protein", "protein urine", "protein, urine", "urinary protein", "urine albumin"]},
+    {"test_name": "Urine Glucose", "canonical_name": "Urine Glucose", "category": "Urinalysis", "default_unit": "mg/dL", "ref_min": 0.0, "ref_max": 15.0, "critical_low": None, "critical_high": 500.0, "synonyms": ["urine glucose", "glucose urine", "glucose, urine", "urinary glucose", "urine sugar"]},
+    {"test_name": "eGFR", "canonical_name": "Estimated Glomerular Filtration Rate (eGFR)", "category": "Renal Panel", "default_unit": "mL/min/1.73m2", "ref_min": 90.0, "ref_max": None, "critical_low": 15.0, "critical_high": None, "synonyms": ["egfr", "estimated glomerular filtration rate", "estimated glomerular filtration rate (egfr)", "gfr", "estimated gfr", "egfr (ckd-epi)", "gfr estimated"]},
+    {"test_name": "Uric Acid", "canonical_name": "Uric Acid, Serum", "category": "Renal Panel", "default_unit": "mg/dL", "ref_min": 3.5, "ref_max": 7.2, "critical_low": 1.5, "critical_high": 12.0, "synonyms": ["uric acid", "serum uric acid", "uric acid, serum", "s. uric acid"]},
+    {"test_name": "C-Reactive Protein", "canonical_name": "C-Reactive Protein (CRP)", "category": "Inflammatory Markers", "default_unit": "mg/L", "ref_min": 0.0, "ref_max": 3.0, "critical_low": None, "critical_high": 50.0, "synonyms": ["crp", "c-reactive protein", "c-reactive protein (crp)", "hs-crp", "high sensitivity crp"]},
+    {"test_name": "Erythrocyte Sedimentation Rate", "canonical_name": "Erythrocyte Sedimentation Rate (ESR)", "category": "Inflammatory Markers", "default_unit": "mm/hr", "ref_min": 0.0, "ref_max": 20.0, "critical_low": None, "critical_high": 100.0, "synonyms": ["esr", "erythrocyte sedimentation rate", "erythrocyte sedimentation rate (esr)", "sed rate", "westergren esr"]},
 ]
 
 GLOSSARY_SEED = [
@@ -328,7 +340,18 @@ GLOSSARY_SEED = [
     {"term": "Free T4", "definition": "Free Thyroxine, the active circulating form of thyroid hormone regulating metabolism, energy, and body temperature."},
     {"term": "Ferritin", "definition": "A cellular protein that stores iron and releases it in a controlled fashion; the most reliable indicator of total body iron reserves."},
     {"term": "Iron", "definition": "An essential mineral required for producing hemoglobin, transporting oxygen throughout the body, and maintaining cellular energy."},
-    {"term": "Bilirubin", "definition": "A yellowish compound formed during the normal breakdown of red blood cells, processed and excreted by the liver through bile."}
+    {"term": "Bilirubin", "definition": "A yellowish compound formed during the normal breakdown of red blood cells, processed and excreted by the liver through bile."},
+    {"term": "RBC", "definition": "Red blood cells (erythrocytes) that carry oxygen from your lungs to every tissue and organ in your body while returning carbon dioxide to be exhaled."},
+    {"term": "Hematocrit", "definition": "The percentage of your total blood volume made up of red blood cells, reflecting overall hydration status and oxygen-carrying capacity."},
+    {"term": "Sodium", "definition": "A vital mineral and electrolyte that helps balance fluid levels in and around your cells, stabilizes blood pressure, and enables proper nerve and muscle signaling."},
+    {"term": "Potassium", "definition": "An essential electrolyte that controls heart rhythm, regulates blood pressure, and facilitates normal muscle contractions and nerve impulses throughout the body."},
+    {"term": "Chloride", "definition": "An electrolyte that works closely with sodium and potassium to maintain electrical neutrality, proper fluid balance, and blood pH acid-base equilibrium."},
+    {"term": "Calcium", "definition": "A fundamental mineral required for building and maintaining strong bones and teeth, blood clotting, muscle contractions, and heart nerve transmission."},
+    {"term": "Urine Protein", "definition": "Measures protein in the urine (proteinuria). Healthy kidneys keep proteins in the blood; presence in urine can be an early indicator of kidney stress or damage."},
+    {"term": "Urine Glucose", "definition": "Measures sugar in the urine (glucosuria). Normally absent; spillover occurs when blood sugar exceeds renal absorption thresholds, often indicating poorly controlled diabetes."},
+    {"term": "Uric Acid", "definition": "A natural waste byproduct formed during the breakdown of purines; elevated levels can form painful crystals in joints (gout) or lead to kidney stones."},
+    {"term": "CRP", "definition": "C-Reactive Protein, a protein produced rapidly by the liver in response to acute inflammation, tissue injury, bacterial infection, or vascular stress."},
+    {"term": "ESR", "definition": "Erythrocyte Sedimentation Rate, an indicator measuring how quickly red blood cells settle to the bottom of a test tube; higher rates suggest systemic inflammation."}
 ]
 
 from app.core.db_sync import sync_sqlite_schema
@@ -565,8 +588,24 @@ async def seed_database(custom_engine=None, custom_session_factory=None, include
                 session.add(GlossaryTerm(**g_seed, reviewed_by="Clinical Reference Board", reviewed_at=datetime.now(timezone.utc)))
         await session.commit()
 
+        # 7. Seed Clinical Biomarker Explanations
+        for ex in EXPLANATION_BANK:
+            e_q = select(BiomarkerExplanation).where(
+                BiomarkerExplanation.canonical_name == ex["test"],
+                BiomarkerExplanation.flag == ex["flag"]
+            )
+            e_res = await session.execute(e_q)
+            if not e_res.scalars().first():
+                session.add(BiomarkerExplanation(
+                    test_name=ex["test"],
+                    canonical_name=ex["test"],
+                    flag=ex["flag"],
+                    explanation_text=ex["explanation"]
+                ))
+        await session.commit()
+
         doc_msg = f"{len(DOCTORS_DATA)} verified doctors, " if include_doctors else ""
-        print(f"[OK] Database initialized with {doc_msg}clinical thresholds, admin accounts, and glossary.")
+        print(f"[OK] Database initialized with {doc_msg}clinical thresholds, explanation bank, admin accounts, and glossary.")
 
 if __name__ == "__main__":
     asyncio.run(seed_database())

@@ -151,6 +151,7 @@ export const BiomarkerTrendsScreen: React.FC<{ navigation: any }> = ({ navigatio
                       cy={c.y}
                       r="5"
                       fill={
+                        c.flag?.includes('CRITICAL') ? COLORS.urgent :
                         c.flag === 'HIGH' || c.flag === 'LOW' ? COLORS.attention : COLORS.primary
                       }
                       stroke="#ffffff"

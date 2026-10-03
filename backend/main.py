@@ -52,6 +52,7 @@ origins = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"^https?://.*" if settings.ENVIRONMENT == "development" else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

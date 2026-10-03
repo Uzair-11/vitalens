@@ -15,6 +15,9 @@ class RefreshToken(Base):
     token_hash = Column(String(255), nullable=False, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     revoked_at = Column(DateTime(timezone=True), nullable=True)
+    device_info = Column(String(255), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    ip_address = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now)
 
     # Relationships

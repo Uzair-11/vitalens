@@ -1,6 +1,9 @@
 import { apiClient } from './client';
 import { User, LoginCredentials, RegisterCredentials } from '../types';
 import { Platform } from 'react-native';
+import { API_CONFIG } from '../constants/config';
+import { useAuthStore } from '../store/authStore';
+import { getFileBlob } from './reportApi';
 
 interface AuthResponse {
   access_token: string;
@@ -46,11 +49,56 @@ export const authApi = {
     return authApi.login(data.email, data.password);
   },
 
-  resetPassword: async (email: string, newPassword: string): Promise<void> => {
-    await apiClient.post('/auth/reset-password', {
+  resetPassword: async (email: string, newPassword: string, otp?: string): Promise<void> => {
+    if (otp) {
+      await apiClient.post('/auth/forgot-password/reset', {
+        email: email.trim().toLowerCase(),
+        otp: otp.trim(),
+        new_password: newPassword,
+      });
+    } else {
+      await apiClient.post('/auth/reset-password', {
+        email: email.trim().toLowerCase(),
+        new_password: newPassword,
+      });
+    }
+  },
+
+  sendVerificationOtp: async (email: string): Promise<{ status: string; message: string; dev_otp?: string }> => {
+    const response = await apiClient.post('/auth/send-verification-otp', { email: email.trim().toLowerCase() });
+    return response.data;
+  },
+
+  verifyEmailOtp: async (email: string, otp: string): Promise<{ status: string; message: string; email_verified: boolean; is_verified: boolean }> => {
+    const response = await apiClient.post('/auth/verify-email-otp', {
       email: email.trim().toLowerCase(),
+      otp: otp.trim(),
+    });
+    return response.data;
+  },
+
+  forgotPasswordRequestOtp: async (email: string): Promise<{ status: string; message: string; dev_otp?: string }> => {
+    const response = await apiClient.post('/auth/forgot-password/request-otp', {
+      email: email.trim().toLowerCase(),
+    });
+    return response.data;
+  },
+
+  forgotPasswordVerifyOtp: async (email: string, otp: string): Promise<{ status: string; message: string }> => {
+    const response = await apiClient.post('/auth/forgot-password/verify-otp', {
+      email: email.trim().toLowerCase(),
+      otp: otp.trim(),
+    });
+    return response.data;
+  },
+
+  forgotPasswordReset: async (email: string, otp: string, newPassword: string): Promise<{ status: string; message: string }> => {
+    const response = await apiClient.post('/auth/forgot-password/reset', {
+      email: email.trim().toLowerCase(),
+      otp: otp.trim(),
       new_password: newPassword,
     });
+    return response.data;
   },
 
   refreshToken: async (refreshToken: string): Promise<string> => {
@@ -81,6 +129,11 @@ export const authApi = {
     return response.data;
   },
 
+  linkAbha: async (abhaNumber: string): Promise<{ status: string; message: string; abha_number: string }> => {
+    const response = await apiClient.post('/me/abha/link', { abha_number: abhaNumber });
+    return response.data;
+  },
+
   getConsents: async () => {
     const response = await apiClient.get('/auth/me/consents');
     return response.data;
@@ -102,31 +155,49 @@ export const authApi = {
   },
 
   uploadAvatar: async (fileUri: string): Promise<User> => {
-    const formData = new FormData();
     const fileName = `avatar_${Date.now()}.jpg`;
     const mimeType = 'image/jpeg';
+    const token = useAuthStore.getState().token;
+    const url = `${API_CONFIG.BASE_URL}/auth/avatar`;
 
-    if (Platform.OS === 'web') {
-      try {
-        const res = await fetch(fileUri);
-        const blob = await res.blob();
-        formData.append('file', blob, fileName);
-      } catch (e) {
-        formData.append('file', new Blob(['image data'], { type: mimeType }), fileName);
+    const blob = await getFileBlob(fileUri, mimeType);
+    const formData = new FormData();
+    formData.append('file', blob, fileName);
+
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch(url, { method: 'POST', headers, body: formData });
+      const resData = await res.json().catch(() => null);
+      if (!res.ok) {
+        const errorDetail = resData?.detail || `Upload failed with status ${res.status}`;
+        throw new Error(typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail));
       }
-    } else {
-      formData.append('file', {
-        uri: fileUri,
-        name: fileName,
-        type: mimeType,
-      } as any);
+      return resData;
+    } catch (fetchErr: any) {
+      if (fetchErr.message && !fetchErr.message.includes('Network request failed')) {
+        throw fetchErr;
+      }
+      // Fallback: XHR
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        xhr.setRequestHeader('Accept', 'application/json');
+        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.onload = () => {
+          let data: any = null;
+          try { data = JSON.parse(xhr.responseText); } catch { data = xhr.responseText; }
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(data);
+          } else {
+            const errorDetail = data?.detail || `Upload failed with status ${xhr.status}`;
+            reject(new Error(typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail)));
+          }
+        };
+        xhr.onerror = (e) => reject(new Error('Network Error: Failed to upload avatar.'));
+        xhr.send(formData);
+      });
     }
-
-    const response = await apiClient.post<User>('/auth/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
   },
 };

@@ -63,7 +63,10 @@ def check_emergency(symptoms_text: str, abnormal_biomarkers: List[Dict[str, Any]
         if red_flag in text_lower:
             return True, f"You reported experiencing '{red_flag}'. Please seek immediate emergency medical care (dial 911/112 or visit nearest emergency room) rather than waiting for an outpatient appointment."
             
-    critical_biomarkers = [b for b in abnormal_biomarkers if b.get("flag") == "CRITICAL"]
+    critical_biomarkers = [
+        b for b in abnormal_biomarkers 
+        if str(b.get("flag", "")).upper().startswith("CRITICAL")
+    ]
     if critical_biomarkers:
         names = ", ".join([b.get("test_name", "") for b in critical_biomarkers])
         return True, f"Your report shows critical biomarker values ({names}). We strongly advise immediate clinical evaluation at an urgent care or emergency facility."
@@ -81,13 +84,15 @@ def recommend_specialty(
     body_region: str,
     abnormal_biomarkers: List[Dict[str, Any]],
     severity_score: int = 5,
-    duration_days: int = 7
+    duration_days: int = 7,
+    tracer: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
     Executes specialty recommendation:
     1. Emergency Red-Flag Screening (Immediate Urgent Intercept).
     2. Primary Inference: Custom PyTorch Deep Neural Network (VitaLensSpecialtyNet).
     3. Fallback Inference: Rule-based heuristic + TF-IDF semantic matcher.
+    4. Optional Super Admin observability tracing.
     """
     all_symptoms = " ".join([primary_concern] + symptoms_list + [body_region])
     
@@ -103,13 +108,51 @@ def recommend_specialty(
             body_region=body_region,
             abnormal_biomarkers=abnormal_biomarkers,
             severity_score=severity_score,
-            duration_days=duration_days
+            duration_days=duration_days,
+            return_trace_telemetry=(tracer is not None)
         )
         if pytorch_res is not None:
             pytorch_res["is_emergency_flagged"] = is_emergency
             pytorch_res["emergency_message"] = emergency_msg
             pytorch_res["abnormal_biomarkers_considered"] = [b.get("test_name", "") for b in abnormal_biomarkers]
             pytorch_res["symptoms_considered"] = [primary_concern] + symptoms_list
+            
+            if tracer is not None and "trace_telemetry" in pytorch_res:
+                telem = pytorch_res.pop("trace_telemetry")
+                tracer.record_step_5_canonical_feature_mapping(telem.get("mapping_table", []))
+                tracer.record_step_6_symptom_encoding(
+                    telem.get("full_text", ""),
+                    telem.get("matched_tfidf_terms", []),
+                    round(severity_score / 10.0, 2),
+                    round(min(duration_days / 30.0, 1.0), 2)
+                )
+                tracer.record_step_7_final_feature_vector(
+                    telem.get("input_feature_count", 298),
+                    telem.get("text_features_dim", 256),
+                    telem.get("dense_features_dim", 42),
+                    telem.get("dense_breakdown", [])
+                )
+                tracer.record_step_8_model_inference(
+                    pytorch_res.get("model_used", "VitaLensSpecialtyNet"),
+                    "specialty-net-v1.0.0",
+                    telem.get("input_feature_count", 298),
+                    telem.get("inference_duration_ms", 0.0)
+                )
+                tracer.record_step_9_model_output(
+                    telem.get("all_probabilities_sorted", []),
+                    pytorch_res.get("recommended_specialty_name", "General Medicine"),
+                    pytorch_res.get("confidence_score", 0.0)
+                )
+                tracer.record_step_10_final_decision(
+                    pytorch_res.get("recommended_specialty_name", "General Medicine"),
+                    pytorch_res.get("recommended_specialty_name", "General Medicine"),
+                    pytorch_res.get("recommended_specialty_name", "General Medicine"),
+                    is_emergency,
+                    emergency_msg,
+                    fallback_used=False
+                )
+                pytorch_res["trace_id"] = tracer.trace_id
+
             return pytorch_res
     except Exception as e:
         print(f"[!] PyTorch specialty predictor fallback: {e}")
@@ -187,7 +230,7 @@ def recommend_specialty(
             f"not a diagnosis — please confirm with a healthcare professional."
         )
 
-    return {
+    res = {
         "recommended_specialty_name": final_specialty,
         "confidence_score": round(confidence, 2),
         "rationale": rationale,
@@ -197,3 +240,14 @@ def recommend_specialty(
         "symptoms_considered": [primary_concern] + symptoms_list,
         "model_used": "Heuristic Rule & TF-IDF Fallback"
     }
+    if tracer is not None:
+        tracer.record_step_10_final_decision(
+            rule_matched_specialty or semantic_specialty or "General Medicine",
+            final_specialty,
+            final_specialty,
+            is_emergency,
+            emergency_msg,
+            fallback_used=True
+        )
+        res["trace_id"] = tracer.trace_id
+    return res

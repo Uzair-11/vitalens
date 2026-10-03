@@ -20,8 +20,20 @@ apiClient.interceptors.request.use(
 
     // If uploading FormData (e.g. multipart report files), remove the default application/json
     // so React Native's XMLHttpRequest automatically appends the multipart boundary header
-    if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
+    const isFormData = config.data && (
+      config.data instanceof FormData ||
+      typeof (config.data as any)?.append === 'function' ||
+      Array.isArray((config.data as any)?._parts)
+    );
+
+    if (isFormData && config.headers) {
+      if (typeof (config.headers as any).delete === 'function') {
+        (config.headers as any).delete('Content-Type');
+        (config.headers as any).delete('content-type');
+      } else {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
     }
 
     const fullUrl = `${config.baseURL || ''}${config.url || ''}`;

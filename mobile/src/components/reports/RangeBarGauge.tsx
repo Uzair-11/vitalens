@@ -26,11 +26,14 @@ export const RangeBarGauge: React.FC<RangeBarGaugeProps> = ({
   const normalStart = ((min - gaugeMin) / totalSpan) * 100;
   const normalWidth = ((max - min) / totalSpan) * 100;
 
-  const isLow = flag === 'LOW';
-  const isHigh = flag === 'HIGH';
-  const isCritical = flag === 'CRITICAL' || flag === 'ABNORMAL' || flag === 'URGENT';
+  const rawFlag = (flag || 'NORMAL').toUpperCase().trim();
+  const isCriticalHigh = rawFlag === 'CRITICAL_HIGH' || rawFlag === 'CRITICAL HIGH';
+  const isCriticalLow = rawFlag === 'CRITICAL_LOW' || rawFlag === 'CRITICAL LOW';
+  const isCritical = isCriticalHigh || isCriticalLow || rawFlag === 'CRITICAL' || rawFlag === 'ABNORMAL' || rawFlag === 'URGENT';
+  const isLow = rawFlag === 'LOW' || isCriticalLow;
+  const isHigh = rawFlag === 'HIGH' || isCriticalHigh;
 
-  const markerColor = isLow || isHigh ? COLORS.attention : isCritical ? COLORS.urgent : COLORS.normal;
+  const markerColor = isCritical ? COLORS.urgent : (isLow || isHigh ? COLORS.attention : COLORS.normal);
 
   return (
     <View style={styles.gaugeContainer}>

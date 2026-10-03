@@ -59,6 +59,7 @@ out/
 *.apk
 *.aab
 *.ipa
+*.zip
 
 # Presentations & Large Slides
 *.ppt
