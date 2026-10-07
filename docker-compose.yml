@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: vitalens_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: vitalens_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vitalens_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vitalens_backend
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://postgres:admin@db:5432/vitalens_db
+      - TEST_DATABASE_URL=postgresql+asyncpg://postgres:admin@db:5432/vitalens_test_db
+      - VITALENS_MODEL_VERSION=v2
+      - PYTHONPATH=/app
+      - SECRET_KEY=vitalens_dev_secret_key_change_in_production_2026
+      - STORAGE_PROVIDER=local
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

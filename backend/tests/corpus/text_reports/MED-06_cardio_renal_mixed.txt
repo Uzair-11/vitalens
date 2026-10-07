@@ -1,0 +1,19 @@
+PATIENT LABORATORY REPORT
+Name: Arthur Davies    Age: 67    Sex: Male
+Report Date: 2026-10-04
+
+LIPID PROFILE
+Total Cholesterol: 242 mg/dL (Reference: < 200) HIGH
+Triglycerides: 210 mg/dL (Reference: < 150) HIGH
+LDL Cholesterol: 162 mg/dL (Reference: < 100) HIGH
+HDL Cholesterol: 38 mg/dL (Reference: > 40) LOW
+
+RENAL PANEL
+Serum Creatinine: 1.85 mg/dL (Reference: 0.7 - 1.3) HIGH
+Blood Urea Nitrogen: 36 mg/dL (Reference: 7 - 20) HIGH
+Estimated Glomerular Filtration Rate: 39 mL/min (Reference: > 60) LOW
+Uric Acid: 8.4 mg/dL (Reference: 3.5 - 7.2) HIGH
+
+COMPLETE BLOOD COUNT
+Hemoglobin: 12.1 g/dL (Reference: 13.0 - 17.5) LOW
+WBC Count: 7400 /uL (Reference: 4000 - 11000) NORMAL

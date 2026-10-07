@@ -101,13 +101,19 @@ class TestBiomarkerCanonicalization(unittest.TestCase):
         telem = res.get("trace_telemetry", {})
         mapping_table = telem.get("mapping_table", [])
         
-        # Verify 20 canonical biomarkers are defaulted
+        # Verify canonical biomarkers are defaulted according to active version schema
+        version = os.getenv("VITALENS_MODEL_VERSION", "v1").strip().lower()
         defaulted = [m for m in mapping_table if m.get("status") == "DEFAULTED_NORMAL_MIDPOINT"]
-        self.assertEqual(len(defaulted), 20)
-
-        # Verify all 4 excluded biomarkers are identified as unmapped
         unmapped = [m for m in mapping_table if m.get("status") == "UNMAPPED_EXCLUDED_FROM_SCHEMA"]
-        self.assertEqual(len(unmapped), 4)
+
+        if version == "v2":
+            # In V2, Ferritin, Iron, RBC, and Hematocrit are all canonical (4 mapped), leaving 20 defaulted and 0 unmapped
+            self.assertEqual(len(defaulted), 20)
+            self.assertEqual(len(unmapped), 0)
+        else:
+            # In V1, all 4 are outside the 20-biomarker schema, leaving 20 defaulted and 4 unmapped
+            self.assertEqual(len(defaulted), 20)
+            self.assertEqual(len(unmapped), 4)
 
     def test_report_2_bilirubin_now_maps_cleanly(self):
         """Confirms that Report #2's Bilirubin now maps to total_bilirubin cleanly."""

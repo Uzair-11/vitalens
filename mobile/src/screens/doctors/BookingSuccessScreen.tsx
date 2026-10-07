@@ -33,7 +33,7 @@ export const BookingSuccessScreen: React.FC<{ route: any; navigation: any }> = (
                 {appointment?.doctor_name || 'Specialist Doctor'}
               </Text>
               <Text style={styles.doctorSpec}>
-                {appointment?.doctor_specialty || 'General Medicine'}
+                {appointment?.doctor_specialty || 'Specialist Consultation'}
               </Text>
             </View>
             <View style={styles.doctorIconBox}>
@@ -66,7 +66,7 @@ export const BookingSuccessScreen: React.FC<{ route: any; navigation: any }> = (
             <View style={styles.clinicDetailsRow}>
               <MapPin size={14} color={COLORS.textSecondary} style={{ marginRight: 6, marginTop: 1 }} />
               <Text style={styles.clinicText}>
-                {appointment?.doctor_clinic} · {appointment?.doctor_address}
+                {[appointment?.doctor_clinic, appointment?.doctor_address].filter(Boolean).join(' · ') || 'Consultation Clinic'}
               </Text>
             </View>
           </View>

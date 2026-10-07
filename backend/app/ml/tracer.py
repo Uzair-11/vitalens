@@ -114,7 +114,9 @@ class AITracer:
             self.status = "FAILED"
             self.error_step = step_name
             self.error_message = error
-        elif status == "WARNING" and self.status != "FAILED":
+        elif status == "MODEL_UNAVAILABLE" and self.status != "FAILED":
+            self.status = "MODEL_UNAVAILABLE"
+        elif status == "WARNING" and self.status not in ["FAILED", "MODEL_UNAVAILABLE"]:
             self.status = "WARNING"
 
         # Emit asynchronous SSE broadcast
@@ -362,12 +364,13 @@ class AITracer:
         final_specialty_name: str,
         is_emergency: bool,
         emergency_message: Optional[str] = None,
-        fallback_used: bool = False
+        fallback_used: bool = False,
+        decision_status: Optional[str] = None
     ):
         """STEP 10 — FINAL DECISION"""
         t0 = time.perf_counter()
         self.is_emergency_flagged = is_emergency
-        status = "WARNING" if is_emergency or fallback_used else "SUCCESS"
+        status = "MODEL_UNAVAILABLE" if decision_status == "MODEL_UNAVAILABLE" else ("WARNING" if is_emergency or fallback_used else "SUCCESS")
         details = {
             "model_top_class": model_top_class,
             "specialty_name_mapping": specialty_mapping,
@@ -375,7 +378,7 @@ class AITracer:
             "is_emergency_flagged": is_emergency,
             "emergency_message": emergency_message,
             "fallback_used": fallback_used,
-            "decision_status": "INTERCEPTED_EMERGENCY" if is_emergency else ("FALLBACK_RULE_BASED" if fallback_used else "AI_MODEL_CONFIRMED")
+            "decision_status": decision_status or ("INTERCEPTED_EMERGENCY" if is_emergency else ("FALLBACK_RULE_BASED" if fallback_used else "AI_MODEL_CONFIRMED"))
         }
         dur = (time.perf_counter() - t0) * 1000.0
         self._add_step(10, "FINAL_DECISION", status, dur, details)

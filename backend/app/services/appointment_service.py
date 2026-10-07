@@ -12,7 +12,7 @@ from app.schemas.appointment_schema import AppointmentCreate
 
 async def book_appointment(db: AsyncSession, user_id: str, appt_in: AppointmentCreate) -> Appointment:
     # Verify doctor existence
-    doc_query = select(Doctor).where(Doctor.id == appt_in.doctor_id)
+    doc_query = select(Doctor).where(Doctor.id == appt_in.doctor_id).options(selectinload(Doctor.specialty))
     doc_res = await db.execute(doc_query)
     doctor = doc_res.scalars().first()
     if not doctor:
@@ -67,6 +67,23 @@ async def book_appointment(db: AsyncSession, user_id: str, appt_in: AppointmentC
     db.add(appointment)
     await db.commit()
     await db.refresh(appointment)
+
+    # Fetch report name if report_id provided
+    report_name = None
+    if appt_in.report_id:
+        rep_res = await db.execute(select(MedicalReport).where(MedicalReport.id == appt_in.report_id))
+        rep_obj = rep_res.scalars().first()
+        if rep_obj:
+            report_name = rep_obj.file_name
+
+    # Attach doctor and report metadata to appointment instance for Pydantic response serialization
+    appointment.doctor_name = doctor.full_name if doctor else "Specialist"
+    appointment.doctor_specialty = doctor.specialty.name if doctor and doctor.specialty else "General Medicine"
+    appointment.doctor_clinic = doctor.clinic_name if doctor else "Clinic"
+    appointment.doctor_address = doctor.address if doctor else "Address"
+    appointment.doctor_photo = doctor.profile_photo_url if doctor else None
+    appointment.consultation_fee = float(doctor.consultation_fee) if doctor and doctor.consultation_fee else float(fee_inr)
+    appointment.report_name = report_name
 
     # If payments disabled, trigger confirmed notification immediately
     if not payments_enabled:
@@ -125,8 +142,9 @@ async def list_user_appointments(db: AsyncSession, user_id: str, status_filter: 
 
 async def cancel_appointment(db: AsyncSession, user_id: str, appt_id: str, reason: str) -> Appointment:
     query = select(Appointment).where(Appointment.id == appt_id, Appointment.user_id == user_id).options(
-        selectinload(Appointment.doctor),
-        selectinload(Appointment.user)
+        selectinload(Appointment.doctor).selectinload(Doctor.specialty),
+        selectinload(Appointment.user),
+        selectinload(Appointment.report)
     )
     result = await db.execute(query)
     appt = result.scalars().first()
@@ -150,6 +168,17 @@ async def cancel_appointment(db: AsyncSession, user_id: str, appt_id: str, reaso
     await db.commit()
     await db.refresh(appt)
 
+    # Attach metadata for serialization
+    if appt.doctor:
+        appt.doctor_name = appt.doctor.full_name
+        appt.doctor_specialty = appt.doctor.specialty.name if appt.doctor.specialty else "General Medicine"
+        appt.doctor_clinic = appt.doctor.clinic_name
+        appt.doctor_address = appt.doctor.address
+        appt.doctor_photo = appt.doctor.profile_photo_url
+        appt.consultation_fee = float(appt.doctor.consultation_fee) if appt.doctor.consultation_fee else 0.0
+    if appt.report:
+        appt.report_name = appt.report.file_name
+
     # Trigger cancellation notification (consent-gated)
     from app.core.notifications import notification_service
     if appt.user:
@@ -165,7 +194,10 @@ async def cancel_appointment(db: AsyncSession, user_id: str, appt_id: str, reaso
     return appt
 
 async def reschedule_appointment(db: AsyncSession, user_id: str, appt_id: str, new_date: date, new_time: time) -> Appointment:
-    query = select(Appointment).where(Appointment.id == appt_id, Appointment.user_id == user_id)
+    query = select(Appointment).where(Appointment.id == appt_id, Appointment.user_id == user_id).options(
+        selectinload(Appointment.doctor).selectinload(Doctor.specialty),
+        selectinload(Appointment.report)
+    )
     result = await db.execute(query)
     appt = result.scalars().first()
     if not appt:
@@ -200,4 +232,16 @@ async def reschedule_appointment(db: AsyncSession, user_id: str, appt_id: str, n
     appt.status = "RESCHEDULED"
     await db.commit()
     await db.refresh(appt)
+
+    # Attach metadata for serialization
+    if appt.doctor:
+        appt.doctor_name = appt.doctor.full_name
+        appt.doctor_specialty = appt.doctor.specialty.name if appt.doctor.specialty else "General Medicine"
+        appt.doctor_clinic = appt.doctor.clinic_name
+        appt.doctor_address = appt.doctor.address
+        appt.doctor_photo = appt.doctor.profile_photo_url
+        appt.consultation_fee = float(appt.doctor.consultation_fee) if appt.doctor.consultation_fee else 0.0
+    if appt.report:
+        appt.report_name = appt.report.file_name
+
     return appt

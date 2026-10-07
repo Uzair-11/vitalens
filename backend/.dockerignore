@@ -1,0 +1,13 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+htmlcov
+.git
+.gitignore
+uploads/*
+!uploads/.gitkeep
+node_modules
+.env

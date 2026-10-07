@@ -1,0 +1,17 @@
+PATIENT LABORATORY REPORT
+Name: Vikram Malhotra    Age: 54    Sex: Male
+Report Date: 2026-10-04
+
+LIVER FUNCTION TESTS
+Alanine Aminotransferase (ALT): 118 U/L (Reference: 7 - 40) HIGH
+Aspartate Aminotransferase (AST): 134 U/L (Reference: 10 - 40) HIGH
+Total Bilirubin: 2.9 mg/dL (Reference: 0.2 - 1.2) HIGH
+
+COMPLETE BLOOD COUNT
+Platelet Count: 108000 /uL (Reference: 150000 - 450000) LOW
+Hemoglobin: 12.6 g/dL (Reference: 13.0 - 17.5) LOW
+White Blood Cell Count: 7100 /uL (Reference: 4000 - 11000) NORMAL
+
+METABOLIC
+Serum Creatinine: 1.0 mg/dL (Reference: 0.7 - 1.3) NORMAL
+Blood Urea Nitrogen: 17 mg/dL (Reference: 7 - 20) NORMAL

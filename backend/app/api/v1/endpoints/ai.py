@@ -177,7 +177,10 @@ async def get_specialty_recommendation(
             "emergency_message": recommendation["emergency_message"],
             "abnormal_biomarkers_considered": recommendation["abnormal_biomarkers_considered"],
             "symptoms_considered": recommendation["symptoms_considered"],
-            "trace_id": tracer.trace_id
+            "trace_id": tracer.trace_id,
+            "fallback_used": recommendation.get("fallback_used", False),
+            "prediction_source": recommendation.get("prediction_source", "ai_model"),
+            "model_version": recommendation.get("model_version"),
         }
         tracer.record_step_11_api_response(http_status=200, response_body=response_payload)
         return response_payload

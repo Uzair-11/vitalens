@@ -3,6 +3,7 @@ import { MedicalReportSummary, MedicalReportDetail } from '../types';
 import { Platform } from 'react-native';
 import { API_CONFIG } from '../constants/config';
 import { useAuthStore } from '../store/authStore';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export const getFileBlob = async (fileUri: string, mimeType: string): Promise<Blob> => {
   if (Platform.OS === 'web' && fileUri.startsWith('demo://')) {
@@ -65,17 +66,55 @@ export const reportApi = {
       uriPreview: fileUri.length > 60 ? `${fileUri.substring(0, 60)}...` : fileUri,
     });
 
-    const formData = new FormData();
+    // 1. On Native Mobile (Android & iOS): Use FileSystem.uploadAsync
+    // This streams the file directly from Android SAF content:// or file:// URI via native OkHttp/NSURLSession.
+    // Completely avoids JS-side closed stream / base64 memory issues.
+    if (Platform.OS !== 'web' && (fileUri.startsWith('file://') || fileUri.startsWith('content://'))) {
+      try {
+        console.log(`📡 [API REQ] FileSystem.uploadAsync ${url}`);
+        const uploadResult = await FileSystem.uploadAsync(url, fileUri, {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'file',
+          mimeType: resolvedMime,
+          headers: {
+            Accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
 
+        let resData: any = null;
+        try {
+          resData = JSON.parse(uploadResult.body);
+        } catch {
+          resData = uploadResult.body;
+        }
+
+        if (uploadResult.status >= 200 && uploadResult.status < 300) {
+          console.log(`✅ [API RES] ${uploadResult.status} POST /reports/upload (FileSystem.uploadAsync)`);
+          console.log('📥 [reportApi.uploadReport] Upload successful! Report ID:', resData?.report_id);
+          return resData;
+        } else {
+          console.error(`❌ [API ERR] FileSystem.uploadAsync status ${uploadResult.status}:`, resData);
+          const errorDetail = resData?.detail || `Upload failed with status ${uploadResult.status}`;
+          const err: any = new Error(typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail));
+          err.response = { status: uploadResult.status, data: resData };
+          throw err;
+        }
+      } catch (nativeErr: any) {
+        if (nativeErr.response) {
+          throw nativeErr;
+        }
+        console.warn('⚠️ [reportApi.uploadReport] FileSystem.uploadAsync encountered network error, trying fallback:', nativeErr.message);
+      }
+    }
+
+    // 2. Web or fallback: Standard FormData upload via apiClient
+    const formData = new FormData();
     if (Platform.OS === 'web') {
       const blob = await getFileBlob(fileUri, resolvedMime);
-      console.log('📦 [reportApi.uploadReport] Web Blob created. Size:', blob.size, 'Type:', blob.type);
       formData.append('file', blob, resolvedFileName);
     } else {
-      // In React Native on Android & iOS:
-      // Passing { uri, name, type } streams the binary directly from native disk via OkHttp/NSURLSession.
-      // This completely avoids calling Response.blob(), avoiding bridge base64 copies and memory overhead.
-      console.log('📦 [reportApi.uploadReport] Using native direct file streaming (zero-copy)');
       formData.append('file', {
         uri: fileUri,
         name: resolvedFileName,
@@ -83,80 +122,14 @@ export const reportApi = {
       } as any);
     }
 
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-    };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    console.log(`📡 [API REQ] POST ${url} (multipart upload)`);
-
-    // First try standard fetch with the Blob
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
-
-      const resData = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        console.error(`❌ [API ERR] POST ${url} | Status: ${response.status}`, resData);
-        const errorDetail = resData?.detail || `Upload failed with status ${response.status}`;
-        const err: any = new Error(typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail));
-        err.response = { status: response.status, data: resData };
-        throw err;
-      }
-
-      console.log(`✅ [API RES] ${response.status} POST /reports/upload`);
-      console.log('📥 [reportApi.uploadReport] Upload successful! Report ID:', resData?.report_id);
-      return resData;
-    } catch (fetchErr: any) {
-      if (fetchErr.response) {
-        throw fetchErr;
-      }
-
-      console.log('ℹ️ [reportApi.uploadReport] fetch failed, falling back to XHR POST:', fetchErr.message);
-
-      // Resilient fallback: Upload via XMLHttpRequest
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', url);
-        xhr.setRequestHeader('Accept', 'application/json');
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        }
-
-        xhr.onload = () => {
-          let data: any = null;
-          try {
-            data = JSON.parse(xhr.responseText);
-          } catch {
-            data = xhr.responseText;
-          }
-
-          if (xhr.status >= 200 && xhr.status < 300) {
-            console.log(`✅ [API RES] ${xhr.status} POST /reports/upload (via XHR)`);
-            resolve(data);
-          } else {
-            console.error(`❌ [API ERR] POST ${url} | Status: ${xhr.status} (via XHR)`, data);
-            const errorDetail = data?.detail || `Upload failed with status ${xhr.status}`;
-            const err: any = new Error(typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail));
-            err.response = { status: xhr.status, data };
-            reject(err);
-          }
-        };
-
-        xhr.onerror = (e) => {
-          console.error('❌ [API ERR] XHR POST failed:', e);
-          reject(new Error('Network Error: Failed to upload file to backend server.'));
-        };
-
-        xhr.send(formData);
-      });
-    }
+    const response = await apiClient.post('/reports/upload', formData, {
+      headers: {
+        Accept: 'application/json',
+      },
+      transformRequest: (data) => data,
+    });
+    console.log('📥 [reportApi.uploadReport] Upload successful! Report ID:', response.data?.report_id);
+    return response.data;
   },
 
   analyzeReport: async (reportId: string): Promise<MedicalReportDetail> => {

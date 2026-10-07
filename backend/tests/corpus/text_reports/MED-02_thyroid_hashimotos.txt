@@ -1,0 +1,16 @@
+PATIENT LABORATORY REPORT
+Name: Emily Clarke    Age: 35    Sex: Female
+Report Date: 2026-10-03
+
+THYROID FUNCTION TESTS
+Thyroid Stimulating Hormone (TSH): 8.9 uIU/mL (Reference: 0.4 - 4.5) HIGH
+Free T4: 0.65 ng/dL (Reference: 0.8 - 1.8) LOW
+
+COMPLETE BLOOD COUNT
+Hemoglobin: 12.8 g/dL (Reference: 12.0 - 16.0) NORMAL
+White Blood Cell Count: 6200 /uL (Reference: 4000 - 11000) NORMAL
+Platelet Count: 255000 /uL (Reference: 150000 - 450000) NORMAL
+
+LIPID PROFILE
+Total Cholesterol: 215 mg/dL (Reference: < 200) HIGH
+LDL Cholesterol: 135 mg/dL (Reference: < 100) HIGH

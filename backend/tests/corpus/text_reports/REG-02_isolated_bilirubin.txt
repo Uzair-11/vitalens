@@ -1,0 +1,15 @@
+PATIENT LABORATORY REPORT
+Name: Rahul Sen    Age: 51    Sex: Male
+Report Date: 2026-10-01
+
+LIVER FUNCTION TESTS
+Total Bilirubin: 3.4 mg/dL (Reference: 0.2 - 1.2) HIGH
+Direct Bilirubin: 1.8 mg/dL (Reference: 0.0 - 0.3) HIGH
+Alanine Aminotransferase (ALT): 32 U/L (Reference: 7 - 40) NORMAL
+Aspartate Aminotransferase (AST): 28 U/L (Reference: 10 - 40) NORMAL
+Alkaline Phosphatase: 110 U/L (Reference: 44 - 147) NORMAL
+
+COMPLETE BLOOD COUNT
+Hemoglobin: 14.1 g/dL (Reference: 13.0 - 17.5) NORMAL
+WBC: 6800 /uL (Reference: 4000 - 11000) NORMAL
+Platelets: 240000 /uL (Reference: 150000 - 450000) NORMAL

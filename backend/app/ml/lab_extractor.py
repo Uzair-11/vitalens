@@ -109,7 +109,7 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "default_max": 5.6,
         "critical_low": 3.5,
         "critical_high": 14.0,
-        "aliases": ["hba1c", "glycated hemoglobin (hba1c)", "glycated hemoglobin", "a1c"]
+        "aliases": ["hba1c", "glycated hemoglobin (hba1c)", "glycated hemoglobin", "hemoglobin a1c", "hemoglobin a1c (hba1c)", "a1c"]
     },
     "total_cholesterol": {
         "canonical_name": "Total Cholesterol",
@@ -159,7 +159,7 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "default_max": 1.2,
         "critical_low": 0.2,
         "critical_high": 5.0,
-        "aliases": ["serum creatinine", "sr creatinine", "creatinine"]
+        "aliases": ["serum creatinine", "sr creatinine", "creatinine, serum", "creatinine serum", "creatinine"]
     },
     "bun": {
         "canonical_name": "Blood Urea Nitrogen (BUN)",
@@ -169,7 +169,7 @@ DEFAULT_BIOMARKER_DEFINITIONS = {
         "default_max": 20.0,
         "critical_low": 2.0,
         "critical_high": 80.0,
-        "aliases": ["bun", "blood urea nitrogen", "blood urea nitrogen (bun)", "urea nitrogen"]
+        "aliases": ["bun", "blood urea nitrogen", "blood urea nitrogen (bun)", "b.u.n.", "b.u.n", "urea nitrogen"]
     },
     "alt": {
         "canonical_name": "Alanine Aminotransferase (ALT)",
@@ -372,9 +372,10 @@ def _generate_aliases_for_name(test_name: str, canonical_name: str) -> List[str]
                     aliases.add(f"{words[1]}, {words[0]}")
                     aliases.add(f"{words[0]}, {words[1]}")
 
-    # Expand standard clinical terminology synonyms
+    # Expand standard clinical terminology synonyms using strict word-boundary matching
     for root, syns in SYNONYM_MAP.items():
-        if any(root in a for a in list(aliases)):
+        pattern = r"\b" + re.escape(root) + r"\b"
+        if any(re.search(pattern, a) for a in list(aliases)):
             for s in syns:
                 aliases.add(s)
 
@@ -512,7 +513,7 @@ NON_LAB_SECTION_PATTERNS = [
 ]
 
 LAB_SECTION_PATTERNS = [
-    r"^\s*(?:\d+[\.\)]\s*)?(?:diagnostic\s+investigations|laboratory\s+results|lab\s+results|laboratory\s+investigations|investigations|test\s+results|biochemistry|hematology|serology|endocrinology|pathology|urinalysis|blood\s+work|metabolic\s+panel|lipid\s+panel|thyroid\s+panel|renal\s+function|liver\s+function)\b"
+    r"^\s*(?:\d+[\.\)]\s*)?(?:diagnostic\s+investigations|laboratory\s+results|lab\s+results|laboratory\s+investigations|investigations|test\s+results|biochemistry|hematology|serology|endocrinology|pathology|urinalysis|blood\s+work|metabolic\s+panel|lipid\s+panel|lipid\s+profile|thyroid\s+panel|thyroid\s+function|renal\s+function|renal\s+panel|liver\s+function|complete\s+blood\s+count|cbc\b|iron\s+studies|inflammatory\s+markers|diabetes\s*(?:&|and)?\s*metabolism)\b"
 ]
 
 def is_medication_or_non_lab_line(line_lower: str) -> bool:
@@ -641,6 +642,8 @@ def parse_line_biomarker(line: str, biomarker_library: Dict[str, Any], found_key
 
     # Strip descriptor suffixes like "count", "counts", "level", "value", etc.
     rest = re.sub(r"^(?:count|counts|level|levels|concentration|value|result|index|total)\b\s*[:=-]?\s*", "", rest, flags=re.I).strip()
+    # Strip visual table leaders (dot leaders, dashes, equals, or separator characters e.g. "....... 162" or "---- 162")
+    rest = re.sub(r"^(\.{2,}|[_\-=:|>~]{1,})\s*", "", rest).strip()
     if not rest:
         return None
 
@@ -800,10 +803,10 @@ def extract_biomarkers_from_text(
 
     # Pass 1: Parse structured lines
     raw_lines = raw_text.splitlines()
-    has_explicit_sections = any(re.search(lp, raw_text, re.I | re.M) for lp in LAB_SECTION_PATTERNS)
-    in_lab_section = not has_explicit_sections
+    in_lab_section = True  # Default to extracting lab lines until a non-lab section is encountered
+    parsed_line_indices = set()
 
-    for line in raw_lines:
+    for idx, line in enumerate(raw_lines):
         line_clean = line.strip()
         if not line_clean:
             continue
@@ -816,18 +819,21 @@ def extract_biomarkers_from_text(
             in_lab_section = False
             continue
 
-        if has_explicit_sections and not in_lab_section:
+        if not in_lab_section:
             continue
 
         res = parse_line_biomarker(line, biomarker_library, found_keys)
         if res:
+            parsed_line_indices.add(idx)
             found_keys.add(res["key"])
             record = dict(res)
             record.pop("key", None)
             extracted.append(record)
 
     # Pass 2: Tabular whitespace column alignment fallback for remaining unextracted markers
-    for line in raw_lines:
+    for idx, line in enumerate(raw_lines):
+        if idx in parsed_line_indices:
+            continue
         line_clean = line.strip()
         if not line_clean:
             continue

@@ -1,0 +1,18 @@
+PATIENT LABORATORY REPORT
+Name: Ayesha Khan    Age: 29    Sex: Female
+Report Date: 2026-10-03
+
+COMPLETE BLOOD COUNT
+Hemoglobin: 8.4 g/dL (Reference: 12.0 - 16.0) LOW
+Red Blood Cell Count: 3.20 million/uL (Reference: 4.0 - 5.2) LOW
+Hematocrit: 27.5 % (Reference: 36.0 - 46.0) LOW
+White Blood Cell Count: 5900 /uL (Reference: 4000 - 11000) NORMAL
+Platelet Count: 310000 /uL (Reference: 150000 - 450000) NORMAL
+
+IRON STUDIES
+Serum Ferritin: 6 ng/mL (Reference: 15 - 150) LOW
+Serum Iron: 28 ug/dL (Reference: 50 - 170) LOW
+
+METABOLIC
+Fasting Blood Glucose: 88 mg/dL (Reference: 70 - 99) NORMAL
+Serum Creatinine: 0.8 mg/dL (Reference: 0.6 - 1.1) NORMAL

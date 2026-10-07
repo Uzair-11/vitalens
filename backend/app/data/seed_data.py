@@ -1,6 +1,7 @@
 import os
 import asyncio
 import uuid
+from typing import Optional
 from datetime import date, time, timedelta, timezone, datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -69,174 +70,29 @@ SPECIALTIES_DATA = [
     }
 ]
 
-DOCTORS_DATA = [
-    # Top 10 Verified Endocrinologists requested by User
-    {
-        "specialty": "Endocrinology",
-        "email": "contact@drravishahendo.com",
-        "full_name": "Dr. Ravi Shah",
-        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology",
-        "experience_years": 12,
-        "clinic_name": "Dr. Ravi Shah Endocrine Clinic",
-        "address": "Drive-In Road, Bodakdev",
-        "city": "Ahmedabad",
-        "consultation_fee": 800.00,
-        "rating": 4.9,
-        "review_count": 128,
-        "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Consultant Endocrinologist specializing in comprehensive diabetes care, thyroid disorders, and metabolic health."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "moxitshah30@gmail.com",
-        "full_name": "Dr. Moxit Shah",
-        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology (IPGMER, Kolkata)",
-        "experience_years": 10,
-        "clinic_name": "Vishuddha Endocrine Clinic",
-        "address": "Sindhu Bhavan Road, Bodakdev",
-        "city": "Ahmedabad",
-        "consultation_fee": 1000.00,
-        "rating": 4.9,
-        "review_count": 142,
-        "profile_photo_url": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Endocrinologist and metabolism specialist focusing on personalized diabetes therapy, thyroid disease, and adrenal care."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "info@apollohospitals.com",
-        "full_name": "Dr. Ramesh Goyal",
-        "qualification": "MBBS, MD in General Medicine & Therapeutics, DM in Endocrinology (AIIMS, New Delhi)",
-        "experience_years": 22,
-        "clinic_name": "Apollo Hospitals International",
-        "address": "Plot No. 1A, Bhat GIDC Estate",
-        "city": "Ahmedabad",
-        "consultation_fee": 1200.00,
-        "rating": 4.9,
-        "review_count": 210,
-        "profile_photo_url": "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Senior Consultant Endocrinologist & Diabetologist with extensive clinical and academic background from AIIMS New Delhi."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "info@drshalinendo.com",
-        "full_name": "Dr. Shalin J. Shah",
-        "qualification": "MBBS, MD in Internal Medicine, DNB in Endocrinology (Medanta Institute, Delhi)",
-        "experience_years": 14,
-        "clinic_name": "Gujarat Diabetes and Endocrine Foundation",
-        "address": "Near AEC Char Rasta, Naranpura / Ghatlodia",
-        "city": "Ahmedabad",
-        "consultation_fee": 900.00,
-        "rating": 4.8,
-        "review_count": 115,
-        "profile_photo_url": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Endocrinology consultant specializing in adult and pediatric growth disorders, metabolic syndrome, and advanced thyroid disorders."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "info@sanidhyaclinic.com",
-        "full_name": "Dr. Samir Saini",
-        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology",
-        "experience_years": 15,
-        "clinic_name": "Sanidhya Clinic",
-        "address": "Race Course Road",
-        "city": "Vadodara",
-        "consultation_fee": 850.00,
-        "rating": 4.9,
-        "review_count": 98,
-        "profile_photo_url": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Endocrinologist specializing in reproductive endocrinology, metabolic health, and hormone optimization."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "info@prathamendocare.com",
-        "full_name": "Dr. Pradip P. Dalwadi",
-        "qualification": "MBBS (Pramukh Swami Medical College), MD in Internal Medicine (NHLMMC), DM in Endocrinology (BYL Nair Hospital, Mumbai - Gold Medalist)",
-        "experience_years": 13,
-        "clinic_name": "Pratham Endocare",
-        "address": "Majura Gate / Ring Road",
-        "city": "Surat",
-        "consultation_fee": 950.00,
-        "rating": 4.9,
-        "review_count": 135,
-        "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Gold Medalist Endocrinologist focusing on clinical diabetology, metabolic bone disease, and endocrine disorders."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "appointments@healthplix.com",
-        "full_name": "Dr. Shruti Khare-Aterkar",
-        "qualification": "MBBS, MD in General Medicine, DM in Endocrinology",
-        "experience_years": 11,
-        "clinic_name": "Healthplix Endocrine Care",
-        "address": "Motera / Chandkheda",
-        "city": "Ahmedabad",
-        "consultation_fee": 850.00,
-        "rating": 4.8,
-        "review_count": 92,
-        "profile_photo_url": "https://images.unsplash.com/photo-1594824813570-588267b93ef2?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Consultant Endocrinologist specializing in thyroid disorders, PCOS, female metabolic health, and diabetes."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "info@abplushospital.com",
-        "full_name": "Dr. Om J. Lakhani",
-        "qualification": "MBBS, MD in General Medicine, DNB in Endocrinology & Diabetes",
-        "experience_years": 12,
-        "clinic_name": "AB Plus Hospital",
-        "address": "Navrangpura, Gujarat University Area",
-        "city": "Ahmedabad",
-        "consultation_fee": 1000.00,
-        "rating": 4.9,
-        "review_count": 160,
-        "profile_photo_url": "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Consultant Endocrinologist specializing in pituitary diseases, adrenal disorders, transgender hormone therapy, and diabetes."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "info@bapshospital.org",
-        "full_name": "Dr. Mitali Desai",
-        "qualification": "MD in Internal Medicine (BJMC, Ahmedabad), DrNB in Endocrinology (Sir Ganga Ram Hospital, New Delhi - Gold Medalist)",
-        "experience_years": 10,
-        "clinic_name": "BAPS Pramukh Swami Hospital",
-        "address": "Shahibaug",
-        "city": "Ahmedabad",
-        "consultation_fee": 900.00,
-        "rating": 4.9,
-        "review_count": 105,
-        "profile_photo_url": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Gold Medalist Endocrinologist specializing in neuroendocrinology, gestational diabetes, and complex endocrine pathologies."
-    },
-    {
-        "specialty": "Endocrinology",
-        "email": "info@shalby.in",
-        "full_name": "Dr. Manoj Kumar Agrawal",
-        "qualification": "MBBS, MD in Pediatrics, Certified Fellow of ESPE",
-        "experience_years": 16,
-        "clinic_name": "Shalby Multi-Specialty Hospitals",
-        "address": "Opp. Karnavati Club, SG Highway",
-        "city": "Ahmedabad",
-        "consultation_fee": 1100.00,
-        "rating": 4.8,
-        "review_count": 140,
-        "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
-        "languages": ["English", "Hindi", "Gujarati"],
-        "bio": "Certified pediatric and adolescent endocrinology specialist managing juvenile diabetes, puberty disorders, and metabolic health."
-    },
-    # Fixture doctors retained for automated integration testing
+from app.data.synthetic_doctors_dataset import SYNTHETIC_DOCTORS_55
+
+SPECIALTY_ALIAS_MAP = {
+    "Cardiology": ["Cardiology"],
+    "Endocrinology": ["Endocrinology & Diabetology", "Endocrinology", "Diabetology & Metabolic Care"],
+    "Gastroenterology": ["Gastroenterology & Hepatology", "Gastroenterology"],
+    "Hematology": ["Clinical Hematology & Bone Marrow Transplant", "Hematology"],
+    "Nephrology": ["Nephrology & Kidney Care", "Nephrology"],
+    "Pulmonology": ["Pulmonology & Respiratory Medicine", "Pulmonology"],
+    "Dermatology": ["Dermatology, Venereology & Leprosy (Skin & Hair)", "Dermatology"],
+    "Neurology": ["Neurology"],
+    "Orthopedics": ["Orthopaedics & Joint Replacement", "Orthopedics", "Orthopaedics"],
+    "General Medicine": ["General Medicine (Internal Medicine)", "General Medicine", "Family Medicine & Preventive Healthcare"],
+}
+FIXTURE_TEST_DOCTORS = [
     {
         "specialty": "Cardiology",
         "email": "doctor.jenkins@vitalens.health",
         "full_name": "Dr. Sarah Jenkins, MD, FACC",
         "qualification": "MD (Cardiology), Harvard Medical School",
+        "registration_number": "FIX-REG-JENKINS-001",
+        "registration_council": "Maharashtra Medical Council",
+        "state_code": "MH",
         "experience_years": 14,
         "clinic_name": "Apex Heart & Vascular Institute",
         "address": "742 Evergreen Terrace, Suite 400",
@@ -246,13 +102,19 @@ DOCTORS_DATA = [
         "review_count": 128,
         "profile_photo_url": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300",
         "languages": ["English", "Spanish"],
-        "bio": "Dr. Jenkins is a board-certified cardiologist specializing in preventive cardiology, lipid management, and non-invasive cardiovascular imaging."
+        "bio": "Dr. Jenkins is a board-certified cardiologist specializing in preventive cardiology, lipid management, and non-invasive cardiovascular imaging.",
+        "verification_status": "VERIFIED",
+        "credential_documents": ["SYNTHETIC_VERIFIED_CREDENTIAL_DATASET"],
+        "is_active": True
     },
     {
         "specialty": "Cardiology",
         "email": "doctor.vance@vitalens.health",
         "full_name": "Dr. Robert Vance, MD",
         "qualification": "MBBS, MD (Cardiovascular Diseases)",
+        "registration_number": "FIX-REG-VANCE-002",
+        "registration_council": "Maharashtra Medical Council",
+        "state_code": "MH",
         "experience_years": 18,
         "clinic_name": "Vance Cardiovascular Care Center",
         "address": "120 Medical Arts Pavilion, 3rd Floor",
@@ -262,13 +124,19 @@ DOCTORS_DATA = [
         "review_count": 94,
         "profile_photo_url": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
         "languages": ["English"],
-        "bio": "Senior interventional cardiologist with nearly two decades of clinical experience in managing coronary health and rhythm disorders."
+        "bio": "Senior interventional cardiologist with nearly two decades of clinical experience in managing coronary health and rhythm disorders.",
+        "verification_status": "VERIFIED",
+        "credential_documents": ["SYNTHETIC_VERIFIED_CREDENTIAL_DATASET"],
+        "is_active": True
     },
     {
         "specialty": "Endocrinology",
         "email": "doctor.rostova@vitalens.health",
         "full_name": "Dr. Elena Rostova, MD",
         "qualification": "MD (Endocrinology & Diabetes)",
+        "registration_number": "FIX-REG-ROSTOVA-003",
+        "registration_council": "Gujarat Medical Council",
+        "state_code": "GJ",
         "experience_years": 11,
         "clinic_name": "Metabolic & Thyroid Wellness Clinic",
         "address": "88 Science Blvd, Suite 210",
@@ -278,9 +146,14 @@ DOCTORS_DATA = [
         "review_count": 156,
         "profile_photo_url": "https://images.unsplash.com/photo-1594824813570-588267b93ef2?auto=format&fit=crop&q=80&w=300",
         "languages": ["English", "Russian"],
-        "bio": "Specialist in metabolic syndromes, personalized diabetes care, thyroid optimization, and hormonal regulation."
+        "bio": "Specialist in metabolic syndromes, personalized diabetes care, thyroid optimization, and hormonal regulation.",
+        "verification_status": "VERIFIED",
+        "credential_documents": ["SYNTHETIC_VERIFIED_CREDENTIAL_DATASET"],
+        "is_active": True
     }
 ]
+
+DOCTORS_DATA = FIXTURE_TEST_DOCTORS + SYNTHETIC_DOCTORS_55
 
 SLOT_TIMES = [
     time(9, 0), time(9, 30), time(10, 0), time(10, 30),
@@ -450,9 +323,19 @@ async def seed_database(custom_engine=None, custom_session_factory=None, include
         # 3. Seed Specialties
         specialty_map = {}
         for s_data in SPECIALTIES_DATA:
-            q = select(MedicalSpecialty).where(MedicalSpecialty.name == s_data["name"])
-            res = await session.execute(q)
-            spec = res.scalars().first()
+            canonical_name = s_data["name"]
+            candidates = SPECIALTY_ALIAS_MAP.get(canonical_name, [canonical_name])
+            spec = None
+            for cand in candidates:
+                q = select(MedicalSpecialty).where(MedicalSpecialty.name == cand)
+                res = await session.execute(q)
+                spec = res.scalars().first()
+                if spec:
+                    break
+            if not spec:
+                q = select(MedicalSpecialty).where(MedicalSpecialty.name.ilike(f"%{canonical_name[:6]}%"))
+                res = await session.execute(q)
+                spec = res.scalars().first()
             if not spec:
                 spec = MedicalSpecialty(
                     name=s_data["name"],
@@ -462,12 +345,22 @@ async def seed_database(custom_engine=None, custom_session_factory=None, include
                 session.add(spec)
                 await session.commit()
                 await session.refresh(spec)
-            specialty_map[spec.name] = spec.id
+            specialty_map[canonical_name] = spec.id
 
         # 4. Seed Doctors and Linked Doctor User Accounts (opt-in only)
         if include_doctors:
             for doc_data in DOCTORS_DATA:
                 spec_id = specialty_map.get(doc_data["specialty"])
+                if not spec_id:
+                    candidates = SPECIALTY_ALIAS_MAP.get(doc_data["specialty"], [doc_data["specialty"]])
+                    for cand in candidates:
+                        q = select(MedicalSpecialty).where(MedicalSpecialty.name == cand)
+                        res = await session.execute(q)
+                        spec = res.scalars().first()
+                        if spec:
+                            spec_id = spec.id
+                            specialty_map[doc_data["specialty"]] = spec_id
+                            break
                 if not spec_id:
                     continue
 
@@ -481,15 +374,32 @@ async def seed_database(custom_engine=None, custom_session_factory=None, include
                         hashed_password=get_password_hash("doctor123"),
                         role="DOCTOR",
                         full_name=doc_data["full_name"],
+                        phone=doc_data.get("phone"),
                         is_active=True
                     )
                     session.add(doc_user)
                     await session.commit()
                     await session.refresh(doc_user)
+                else:
+                    if not doc_user.phone and doc_data.get("phone"):
+                        doc_user.phone = doc_data.get("phone")
+                    doc_user.is_active = True
+                    await session.commit()
 
-                doc_q = select(Doctor).where(Doctor.full_name == doc_data["full_name"])
-                doc_res = await session.execute(doc_q)
-                doc = doc_res.scalars().first()
+                # Check if doctor exists by registration_number, email, or full_name
+                doc = None
+                if doc_data.get("registration_number"):
+                    doc_q = select(Doctor).where(Doctor.registration_number == doc_data["registration_number"])
+                    doc_res = await session.execute(doc_q)
+                    doc = doc_res.scalars().first()
+                if not doc and doc_data.get("email"):
+                    doc_q = select(Doctor).where(Doctor.email == doc_data["email"])
+                    doc_res = await session.execute(doc_q)
+                    doc = doc_res.scalars().first()
+                if not doc:
+                    doc_q = select(Doctor).where(Doctor.full_name == doc_data["full_name"])
+                    doc_res = await session.execute(doc_q)
+                    doc = doc_res.scalars().first()
                 
                 if not doc:
                     doc = Doctor(
@@ -497,38 +407,53 @@ async def seed_database(custom_engine=None, custom_session_factory=None, include
                         specialty_id=spec_id,
                         full_name=doc_data["full_name"],
                         qualification=doc_data["qualification"],
-                        experience_years=doc_data["experience_years"],
+                        registration_number=doc_data.get("registration_number"),
+                        registration_council=doc_data.get("registration_council"),
+                        state_code=doc_data.get("state_code"),
+                        email=doc_data.get("email"),
+                        phone=doc_data.get("phone"),
+                        gender=doc_data.get("gender"),
+                        consultation_mode=doc_data.get("consultation_mode", "HYBRID"),
+                        experience_years=doc_data.get("experience_years", 0),
                         clinic_name=doc_data["clinic_name"],
                         address=doc_data["address"],
                         city=doc_data["city"],
-                        consultation_fee=doc_data["consultation_fee"],
-                        rating=doc_data["rating"],
-                        review_count=doc_data["review_count"],
-                        profile_photo_url=doc_data["profile_photo_url"],
-                        languages=doc_data["languages"],
-                        bio=doc_data["bio"],
-                        verification_status="VERIFIED",
+                        consultation_fee=doc_data.get("consultation_fee", 800.0),
+                        rating=doc_data.get("rating", 5.0),
+                        review_count=doc_data.get("review_count", 0),
+                        profile_photo_url=doc_data.get("profile_photo_url"),
+                        languages=doc_data.get("languages", ["English"]),
+                        bio=doc_data.get("bio"),
+                        verification_status=doc_data.get("verification_status", "VERIFIED"),
+                        credential_documents=doc_data.get("credential_documents", ["SYNTHETIC_VERIFIED_CREDENTIAL_DATASET"]),
                         is_active=True
                     )
                     session.add(doc)
                     await session.commit()
                     await session.refresh(doc)
                 else:
-                    if not doc.user_id:
-                        doc.user_id = doc_user.id
+                    doc.user_id = doc_user.id
                     doc.specialty_id = spec_id
                     doc.qualification = doc_data["qualification"]
-                    doc.experience_years = doc_data["experience_years"]
+                    doc.registration_number = doc_data.get("registration_number")
+                    doc.registration_council = doc_data.get("registration_council")
+                    doc.state_code = doc_data.get("state_code")
+                    doc.email = doc_data.get("email")
+                    doc.phone = doc_data.get("phone")
+                    doc.gender = doc_data.get("gender")
+                    doc.consultation_mode = doc_data.get("consultation_mode", "HYBRID")
+                    doc.experience_years = doc_data.get("experience_years", 0)
                     doc.clinic_name = doc_data["clinic_name"]
                     doc.address = doc_data["address"]
                     doc.city = doc_data["city"]
-                    doc.consultation_fee = doc_data["consultation_fee"]
-                    doc.rating = doc_data["rating"]
-                    doc.review_count = doc_data["review_count"]
-                    doc.profile_photo_url = doc_data["profile_photo_url"]
-                    doc.languages = doc_data["languages"]
-                    doc.bio = doc_data["bio"]
-                    doc.verification_status = "VERIFIED"
+                    doc.consultation_fee = doc_data.get("consultation_fee", 800.0)
+                    doc.rating = doc_data.get("rating", 5.0)
+                    doc.review_count = doc_data.get("review_count", 0)
+                    doc.profile_photo_url = doc_data.get("profile_photo_url")
+                    doc.languages = doc_data.get("languages", ["English"])
+                    doc.bio = doc_data.get("bio")
+                    doc.verification_status = doc_data.get("verification_status", "VERIFIED")
+                    doc.credential_documents = doc_data.get("credential_documents", ["SYNTHETIC_VERIFIED_CREDENTIAL_DATASET"])
                     doc.is_active = True
                     await session.commit()
 
@@ -550,7 +475,10 @@ async def seed_database(custom_engine=None, custom_session_factory=None, include
                     await session.commit()
 
                 # Check slots count
-                slots_cnt_q = select(DoctorAvailability).where(DoctorAvailability.doctor_id == doc.id)
+                slots_cnt_q = select(DoctorAvailability).where(
+                    DoctorAvailability.doctor_id == doc.id,
+                    DoctorAvailability.available_date >= date.today()
+                )
                 slots_res = await session.execute(slots_cnt_q)
                 if len(slots_res.scalars().all()) == 0:
                     today = date.today()
@@ -608,4 +536,4 @@ async def seed_database(custom_engine=None, custom_session_factory=None, include
         print(f"[OK] Database initialized with {doc_msg}clinical thresholds, explanation bank, admin accounts, and glossary.")
 
 if __name__ == "__main__":
-    asyncio.run(seed_database())
+    asyncio.run(seed_database(include_doctors=True))

@@ -1,0 +1,43 @@
+PATIENT LABORATORY REPORT
+Name: Arjun Mehta    Age: 42    Sex: Male
+Report Date: 2026-10-05
+
+COMPLETE BLOOD COUNT
+Hemoglobin (Hb): 13.8 g/dL (Reference: 13.0 - 17.5) NORMAL
+White Blood Cell Count (WBC): 9200 /uL (Reference: 4000 - 11000) NORMAL
+Red Blood Cell Count (RBC): 4.72 million/uL (Reference: 4.0 - 5.5) NORMAL
+Platelet Count: 318000 /uL (Reference: 150000 - 450000) NORMAL
+Hematocrit (PCV): 42.1 % (Reference: 36 - 50) NORMAL
+
+DIABETES & METABOLISM
+Fasting Blood Glucose: 96 mg/dL (Reference: 70 - 99) NORMAL
+Glycated Hemoglobin (HbA1c): 5.6 % (Reference: 4.0 - 5.6) NORMAL
+
+LIPID PROFILE
+Total Cholesterol: 214 mg/dL (Reference: 125 - 200) HIGH
+LDL Cholesterol: 142 mg/dL (Reference: 0 - 100) HIGH
+HDL Cholesterol: 38 mg/dL (Reference: 40 - 60) LOW
+Triglycerides: 168 mg/dL (Reference: 0 - 150) HIGH
+
+RENAL PANEL
+Serum Creatinine: 1.7 mg/dL (Reference: 0.6 - 1.2) HIGH
+Blood Urea Nitrogen (BUN): 32 mg/dL (Reference: 7 - 20) HIGH
+Estimated Glomerular Filtration Rate (eGFR): 48 mL/min (Reference: 90 - 120) LOW
+Uric Acid, Serum: 8.6 mg/dL (Reference: 3.5 - 7.2) HIGH
+
+LIVER FUNCTION
+Alanine Aminotransferase (ALT): 28 U/L (Reference: 7 - 40) NORMAL
+Aspartate Aminotransferase (AST): 26 U/L (Reference: 10 - 40) NORMAL
+Bilirubin, Total: 1.0 mg/dL (Reference: 0.2 - 1.2) NORMAL
+
+THYROID PANEL
+Thyroid Stimulating Hormone (TSH): 2.8 uIU/mL (Reference: 0.4 - 4.5) NORMAL
+Free T4: 1.1 ng/dL (Reference: 0.8 - 1.8) NORMAL
+
+IRON STUDIES
+Ferritin: 68 ng/mL (Reference: 15 - 150) NORMAL
+Iron: 96 ug/dL (Reference: 50 - 170) NORMAL
+
+INFLAMMATORY MARKERS
+C-Reactive Protein (CRP): 4.2 mg/L (Reference: 0 - 5) NORMAL
+Erythrocyte Sedimentation Rate (ESR): 18 mm/hr (Reference: 0 - 20) NORMAL

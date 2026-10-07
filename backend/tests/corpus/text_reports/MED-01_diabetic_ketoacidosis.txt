@@ -1,0 +1,17 @@
+PATIENT LABORATORY REPORT
+Name: Sarah Jenkins    Age: 47    Sex: Female
+Report Date: 2026-10-02
+
+DIABETES & METABOLIC PANEL
+Fasting Blood Glucose: 245 mg/dL (Reference: 70 - 99) HIGH
+Glycated Hemoglobin (HbA1c): 11.4 % (Reference: 4.0 - 5.6) HIGH
+
+ELECTROLYTES & RENAL
+Serum Sodium: 132 mEq/L (Reference: 135 - 145) LOW
+Serum Potassium: 5.2 mEq/L (Reference: 3.5 - 5.1) HIGH
+Serum Creatinine: 1.1 mg/dL (Reference: 0.6 - 1.1) NORMAL
+Blood Urea Nitrogen: 19 mg/dL (Reference: 7 - 20) NORMAL
+
+LIPIDS
+Total Cholesterol: 210 mg/dL (Reference: < 200) HIGH
+Triglycerides: 195 mg/dL (Reference: < 150) HIGH

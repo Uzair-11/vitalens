@@ -1,0 +1,17 @@
+[LAB REPORT SCAN - CONFIDENTIAL]
+PATIENT: T. Robinson   AGE: 49   SEX: M
+DATE OF COLLECTION: 2026-09-29
+
+TEST RESULTS (AUTOMATED COUNTER)
+GLUCOSE FASTING............... 162 MG/DL [HIGH] (REF 70-99)
+HEMOGLOBIN A1C................ 8.8 % [HIGH] (REF <5.7)
+CREATININE, SERUM............. 1.65 MG/DL [HIGH] (REF 0.7-1.3)
+B.U.N......................... 28 MG/DL [HIGH] (REF 7-20)
+EGFR (CKD-EPI)................ 49 ML/MIN [LOW] (REF >60)
+CHOLESTEROL TOTAL............. 230 MG/DL [HIGH] (REF <200)
+TRIGLYCERIDES................. 210 MG/DL [HIGH] (REF <150)
+HDL-C......................... 36 MG/DL [LOW] (REF >40)
+LDL-C......................... 152 MG/DL [HIGH] (REF <100)
+WBC........................... 11.5 X10E3/UL [HIGH] (REF 4.5-11.0)
+HGB........................... 12.8 G/DL [NORMAL] (REF 13.0-17.5)
+PLATELET...................... 210 X10E3/UL [NORMAL] (REF 150-450)

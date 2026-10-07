@@ -1,0 +1,409 @@
+{
+  "corpus_version": "1.0.0",
+  "description": "VitaLens Comprehensive Regression and Validation Test Corpus",
+  "text_cases": [
+    {
+      "id": "REG-01",
+      "name": "Renal Focused E2E Regression",
+      "file": "text_reports/REG-01_renal_focused_e2e.txt",
+      "patient_context": {
+        "symptoms": ["Fatigue", "Frequent urination"],
+        "duration": "Few days",
+        "severity": 5,
+        "main_concern": "Fatigue and frequent urination"
+      },
+      "expected_biomarkers": [
+        { "name": "Hemoglobin (Hb)", "canonical_v2": "hemoglobin", "value": 13.8, "unit": "g/dL", "expected_flag": "NORMAL", "ref_min": 13.0, "ref_max": 17.5 },
+        { "name": "White Blood Cell Count (WBC)", "canonical_v2": "wbc_count", "value": 9200.0, "unit": "/uL", "expected_flag": "NORMAL", "ref_min": 4000.0, "ref_max": 11000.0 },
+        { "name": "Red Blood Cell Count (RBC)", "canonical_v2": "rbc_count", "value": 4.72, "unit": "million/uL", "expected_flag": "NORMAL", "ref_min": 4.0, "ref_max": 5.5 },
+        { "name": "Platelet Count", "canonical_v2": "platelet_count", "value": 318000.0, "unit": "/uL", "expected_flag": "NORMAL", "ref_min": 150000.0, "ref_max": 450000.0 },
+        { "name": "Hematocrit (PCV)", "canonical_v2": "hematocrit", "value": 42.1, "unit": "%", "expected_flag": "NORMAL", "ref_min": 36.0, "ref_max": 50.0 },
+        { "name": "Fasting Blood Glucose", "canonical_v2": "glucose_fasting", "value": 96.0, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 70.0, "ref_max": 99.0 },
+        { "name": "Glycated Hemoglobin (HbA1c)", "canonical_v2": "hba1c", "value": 5.6, "unit": "%", "expected_flag": "NORMAL", "ref_min": 4.0, "ref_max": 5.6 },
+        { "name": "Total Cholesterol", "canonical_v2": "total_cholesterol", "value": 214.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 125.0, "ref_max": 200.0 },
+        { "name": "LDL Cholesterol", "canonical_v2": "ldl_cholesterol", "value": 142.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.0, "ref_max": 100.0 },
+        { "name": "HDL Cholesterol", "canonical_v2": "hdl_cholesterol", "value": 38.0, "unit": "mg/dL", "expected_flag": "LOW", "ref_min": 40.0, "ref_max": 60.0 },
+        { "name": "Triglycerides", "canonical_v2": "triglycerides", "value": 168.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.0, "ref_max": 150.0 },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 1.7, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.6, "ref_max": 1.2 },
+        { "name": "Blood Urea Nitrogen (BUN)", "canonical_v2": "bun", "value": 32.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 7.0, "ref_max": 20.0 },
+        { "name": "Estimated Glomerular Filtration Rate (eGFR)", "canonical_v2": "egfr", "value": 48.0, "unit": "mL/min", "expected_flag": "LOW", "ref_min": 90.0, "ref_max": 120.0 },
+        { "name": "Uric Acid, Serum", "canonical_v2": "uric_acid", "value": 8.6, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 3.5, "ref_max": 7.2 },
+        { "name": "Alanine Aminotransferase (ALT)", "canonical_v2": "alt_sgpt", "value": 28.0, "unit": "U/L", "expected_flag": "NORMAL", "ref_min": 7.0, "ref_max": 40.0 },
+        { "name": "Aspartate Aminotransferase (AST)", "canonical_v2": "ast_sgot", "value": 26.0, "unit": "U/L", "expected_flag": "NORMAL", "ref_min": 10.0, "ref_max": 40.0 },
+        { "name": "Bilirubin, Total", "canonical_v2": "total_bilirubin", "value": 1.0, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 0.2, "ref_max": 1.2 },
+        { "name": "Thyroid Stimulating Hormone (TSH)", "canonical_v2": "tsh", "value": 2.8, "unit": "uIU/mL", "expected_flag": "NORMAL", "ref_min": 0.4, "ref_max": 4.5 },
+        { "name": "Free T4", "canonical_v2": "free_t4", "value": 1.1, "unit": "ng/dL", "expected_flag": "NORMAL", "ref_min": 0.8, "ref_max": 1.8 },
+        { "name": "Ferritin", "canonical_v2": "ferritin", "value": 68.0, "unit": "ng/mL", "expected_flag": "NORMAL", "ref_min": 15.0, "ref_max": 150.0 },
+        { "name": "Iron", "canonical_v2": "iron", "value": 96.0, "unit": "ug/dL", "expected_flag": "NORMAL", "ref_min": 50.0, "ref_max": 170.0 },
+        { "name": "C-Reactive Protein (CRP)", "canonical_v2": "crp", "value": 4.2, "unit": "mg/L", "expected_flag": "NORMAL", "ref_min": 0.0, "ref_max": 5.0 },
+        { "name": "Erythrocyte Sedimentation Rate (ESR)", "canonical_v2": "esr", "value": 18.0, "unit": "mm/hr", "expected_flag": "NORMAL", "ref_min": 0.0, "ref_max": 20.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Nephrology"],
+        "acceptable_top2": ["Nephrology", "Cardiology"],
+        "disallowed_primary": ["Cardiology", "Dermatology", "Orthopedics"]
+      }
+    },
+    {
+      "id": "REG-02",
+      "name": "Isolated Bilirubin Regression",
+      "file": "text_reports/REG-02_isolated_bilirubin.txt",
+      "patient_context": {
+        "symptoms": ["Jaundice", "Yellow eyes", "Abdominal pain"],
+        "duration": "1 week",
+        "severity": 6,
+        "main_concern": "Yellowing of skin and dark urine"
+      },
+      "expected_biomarkers": [
+        { "name": "Total Bilirubin", "canonical_v2": "total_bilirubin", "value": 3.4, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.2, "ref_max": 1.2 },
+        { "name": "Alanine Aminotransferase (ALT)", "canonical_v2": "alt_sgpt", "value": 32.0, "unit": "U/L", "expected_flag": "NORMAL", "ref_min": 7.0, "ref_max": 40.0 },
+        { "name": "Aspartate Aminotransferase (AST)", "canonical_v2": "ast_sgot", "value": 28.0, "unit": "U/L", "expected_flag": "NORMAL", "ref_min": 10.0, "ref_max": 40.0 },
+        { "name": "Hemoglobin", "canonical_v2": "hemoglobin", "value": 14.1, "unit": "g/dL", "expected_flag": "NORMAL", "ref_min": 13.0, "ref_max": 17.5 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Gastroenterology"],
+        "acceptable_top2": ["Gastroenterology", "General Medicine"],
+        "disallowed_primary": ["Orthopedics", "Cardiology"]
+      }
+    },
+    {
+      "id": "REG-03",
+      "name": "Lipid Profile Cardiology Regression",
+      "file": "text_reports/REG-03_lipid_cardiology.txt",
+      "patient_context": {
+        "symptoms": ["Chest tightness", "Shortness of breath on exertion"],
+        "duration": "2 weeks",
+        "severity": 7,
+        "main_concern": "Chest tightness and palpitations"
+      },
+      "expected_biomarkers": [
+        { "name": "Total Cholesterol", "canonical_v2": "total_cholesterol", "value": 268.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 200.0 },
+        { "name": "Triglycerides", "canonical_v2": "triglycerides", "value": 245.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 150.0 },
+        { "name": "HDL Cholesterol", "canonical_v2": "hdl_cholesterol", "value": 34.0, "unit": "mg/dL", "expected_flag": "LOW", "ref_min": 40.0 },
+        { "name": "LDL Cholesterol", "canonical_v2": "ldl_cholesterol", "value": 185.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 100.0 },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 0.9, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 0.7, "ref_max": 1.3 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Cardiology"],
+        "acceptable_top2": ["Cardiology", "General Medicine"],
+        "disallowed_primary": ["Dermatology", "Orthopedics"]
+      }
+    },
+    {
+      "id": "MED-01",
+      "name": "Diabetic Presentation",
+      "file": "text_reports/MED-01_diabetic_ketoacidosis.txt",
+      "patient_context": {
+        "symptoms": ["Excessive thirst", "Frequent urination", "Weight loss"],
+        "duration": "3 weeks",
+        "severity": 6,
+        "main_concern": "Polydipsia, polyuria, high blood sugar"
+      },
+      "expected_biomarkers": [
+        { "name": "Fasting Blood Glucose", "canonical_v2": "glucose_fasting", "value": 245.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 70.0, "ref_max": 99.0 },
+        { "name": "Glycated Hemoglobin (HbA1c)", "canonical_v2": "hba1c", "value": 11.4, "unit": "%", "expected_flag": "HIGH", "ref_min": 4.0, "ref_max": 5.6 },
+        { "name": "Serum Sodium", "canonical_v2": null, "value": 132.0, "unit": "mEq/L", "expected_flag": "LOW", "ref_min": 135.0, "ref_max": 145.0 },
+        { "name": "Serum Potassium", "canonical_v2": null, "value": 5.2, "unit": "mEq/L", "expected_flag": "HIGH", "ref_min": 3.5, "ref_max": 5.1 },
+        { "name": "Total Cholesterol", "canonical_v2": "total_cholesterol", "value": 210.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 200.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Endocrinology"],
+        "acceptable_top2": ["Endocrinology", "General Medicine"],
+        "disallowed_primary": ["Orthopedics", "Dermatology"]
+      }
+    },
+    {
+      "id": "MED-02",
+      "name": "Hashimoto's Thyroiditis",
+      "file": "text_reports/MED-02_thyroid_hashimotos.txt",
+      "patient_context": {
+        "symptoms": ["Fatigue", "Cold intolerance", "Weight gain", "Constipation"],
+        "duration": "2 months",
+        "severity": 5,
+        "main_concern": "Unexplained weight gain and severe cold intolerance"
+      },
+      "expected_biomarkers": [
+        { "name": "Thyroid Stimulating Hormone (TSH)", "canonical_v2": "tsh", "value": 8.9, "unit": "uIU/mL", "expected_flag": "HIGH", "ref_min": 0.4, "ref_max": 4.5 },
+        { "name": "Free T4", "canonical_v2": "free_t4", "value": 0.65, "unit": "ng/dL", "expected_flag": "LOW", "ref_min": 0.8, "ref_max": 1.8 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Endocrinology"],
+        "acceptable_top2": ["Endocrinology", "General Medicine"],
+        "disallowed_primary": ["Cardiology", "Orthopedics"]
+      }
+    },
+    {
+      "id": "MED-03",
+      "name": "Iron Deficiency Anemia",
+      "file": "text_reports/MED-03_iron_deficiency_anemia.txt",
+      "patient_context": {
+        "symptoms": ["Extreme fatigue", "Pale skin", "Dizziness", "Brittle nails"],
+        "duration": "1 month",
+        "severity": 6,
+        "main_concern": "Severe pale skin, weakness, dizziness"
+      },
+      "expected_biomarkers": [
+        { "name": "Hemoglobin", "canonical_v2": "hemoglobin", "value": 8.4, "unit": "g/dL", "expected_flag": "LOW", "ref_min": 12.0, "ref_max": 16.0 },
+        { "name": "Red Blood Cell Count", "canonical_v2": "rbc_count", "value": 3.2, "unit": "million/uL", "expected_flag": "LOW", "ref_min": 4.0, "ref_max": 5.2 },
+        { "name": "Hematocrit", "canonical_v2": "hematocrit", "value": 27.5, "unit": "%", "expected_flag": "LOW", "ref_min": 36.0, "ref_max": 46.0 },
+        { "name": "Serum Ferritin", "canonical_v2": "ferritin", "value": 6.0, "unit": "ng/mL", "expected_flag": "LOW", "ref_min": 15.0, "ref_max": 150.0 },
+        { "name": "Serum Iron", "canonical_v2": "iron", "value": 28.0, "unit": "ug/dL", "expected_flag": "LOW", "ref_min": 50.0, "ref_max": 170.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Hematology", "General Medicine"],
+        "acceptable_top2": ["Hematology", "General Medicine"],
+        "disallowed_primary": ["Cardiology", "Orthopedics"]
+      }
+    },
+    {
+      "id": "MED-04",
+      "name": "Hepatic Cirrhosis",
+      "file": "text_reports/MED-04_hepatic_cirrhosis.txt",
+      "patient_context": {
+        "symptoms": ["Abdominal swelling", "Jaundice", "Easy bruising"],
+        "duration": "3 weeks",
+        "severity": 7,
+        "main_concern": "Ascites, jaundice, elevated liver enzymes"
+      },
+      "expected_biomarkers": [
+        { "name": "Alanine Aminotransferase (ALT)", "canonical_v2": "alt_sgpt", "value": 118.0, "unit": "U/L", "expected_flag": "HIGH", "ref_min": 7.0, "ref_max": 40.0 },
+        { "name": "Aspartate Aminotransferase (AST)", "canonical_v2": "ast_sgot", "value": 134.0, "unit": "U/L", "expected_flag": "HIGH", "ref_min": 10.0, "ref_max": 40.0 },
+        { "name": "Total Bilirubin", "canonical_v2": "total_bilirubin", "value": 2.9, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.2, "ref_max": 1.2 },
+        { "name": "Platelet Count", "canonical_v2": "platelet_count", "value": 108000.0, "unit": "/uL", "expected_flag": "LOW", "ref_min": 150000.0, "ref_max": 450000.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Gastroenterology"],
+        "acceptable_top2": ["Gastroenterology", "General Medicine"],
+        "disallowed_primary": ["Orthopedics", "Pulmonology"]
+      }
+    },
+    {
+      "id": "MED-05",
+      "name": "Pulmonary Infection / Inflammatory",
+      "file": "text_reports/MED-05_pulmonary_infection.txt",
+      "patient_context": {
+        "symptoms": ["Productive cough", "High fever", "Shortness of breath", "Pleuritic chest pain"],
+        "duration": "5 days",
+        "severity": 8,
+        "main_concern": "Severe persistent cough with fever and breathlessness"
+      },
+      "expected_biomarkers": [
+        { "name": "C-Reactive Protein (CRP)", "canonical_v2": "crp", "value": 48.0, "unit": "mg/L", "expected_flag": "HIGH", "ref_max": 5.0 },
+        { "name": "Erythrocyte Sedimentation Rate (ESR)", "canonical_v2": "esr", "value": 62.0, "unit": "mm/hr", "expected_flag": "HIGH", "ref_max": 20.0 },
+        { "name": "White Blood Cell Count", "canonical_v2": "wbc_count", "value": 16800.0, "unit": "/uL", "expected_flag": "HIGH", "ref_min": 4000.0, "ref_max": 11000.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Pulmonology", "General Medicine"],
+        "acceptable_top2": ["Pulmonology", "General Medicine"],
+        "disallowed_primary": ["Dermatology", "Orthopedics"]
+      }
+    },
+    {
+      "id": "MED-06",
+      "name": "Cardio-Renal Mixed Presentation",
+      "file": "text_reports/MED-06_cardio_renal_mixed.txt",
+      "patient_context": {
+        "symptoms": ["Shortness of breath", "Bilateral leg swelling", "Chest pressure on exertion"],
+        "duration": "3 weeks",
+        "severity": 7,
+        "main_concern": "Shortness of breath and fluid retention"
+      },
+      "expected_biomarkers": [
+        { "name": "Total Cholesterol", "canonical_v2": "total_cholesterol", "value": 242.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 200.0 },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 1.85, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.7, "ref_max": 1.3 },
+        { "name": "Blood Urea Nitrogen", "canonical_v2": "bun", "value": 36.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 7.0, "ref_max": 20.0 },
+        { "name": "Estimated Glomerular Filtration Rate", "canonical_v2": "egfr", "value": 39.0, "unit": "mL/min", "expected_flag": "LOW", "ref_min": 60.0 },
+        { "name": "Uric Acid", "canonical_v2": "uric_acid", "value": 8.4, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 3.5, "ref_max": 7.2 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Cardiology", "Nephrology"],
+        "acceptable_top2": ["Cardiology", "Nephrology"],
+        "disallowed_primary": ["Dermatology", "Orthopedics", "Gastroenterology"]
+      }
+    },
+    {
+      "id": "MED-07",
+      "name": "Diabetic Nephropathy Mixed Presentation",
+      "file": "text_reports/MED-07_diabetic_nephropathy_mixed.txt",
+      "patient_context": {
+        "symptoms": ["Foamy urine", "Fatigue", "Frequent nighttime urination", "Excessive thirst"],
+        "duration": "1 month",
+        "severity": 6,
+        "main_concern": "Foamy urine and high glucose"
+      },
+      "expected_biomarkers": [
+        { "name": "Fasting Blood Glucose", "canonical_v2": "glucose_fasting", "value": 198.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 70.0, "ref_max": 99.0 },
+        { "name": "Glycated Hemoglobin (HbA1c)", "canonical_v2": "hba1c", "value": 9.4, "unit": "%", "expected_flag": "HIGH", "ref_min": 4.0, "ref_max": 5.6 },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 1.82, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.7, "ref_max": 1.3 },
+        { "name": "Blood Urea Nitrogen (BUN)", "canonical_v2": "bun", "value": 34.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 7.0, "ref_max": 20.0 },
+        { "name": "Estimated Glomerular Filtration Rate (eGFR)", "canonical_v2": "egfr", "value": 41.0, "unit": "mL/min", "expected_flag": "LOW", "ref_min": 60.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Endocrinology", "Nephrology"],
+        "acceptable_top2": ["Endocrinology", "Nephrology"],
+        "disallowed_primary": ["Cardiology", "Orthopedics"]
+      }
+    },
+    {
+      "id": "MED-08",
+      "name": "Healthy Routine Checkup (Baseline)",
+      "file": "text_reports/MED-08_healthy_routine_checkup.txt",
+      "patient_context": {
+        "symptoms": [],
+        "duration": "None",
+        "severity": 1,
+        "main_concern": "Routine annual physical examination"
+      },
+      "expected_biomarkers": [
+        { "name": "Hemoglobin", "canonical_v2": "hemoglobin", "value": 13.5, "unit": "g/dL", "expected_flag": "NORMAL", "ref_min": 12.0, "ref_max": 16.0 },
+        { "name": "Fasting Blood Glucose", "canonical_v2": "glucose_fasting", "value": 86.0, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 70.0, "ref_max": 99.0 },
+        { "name": "Total Cholesterol", "canonical_v2": "total_cholesterol", "value": 175.0, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_max": 200.0 },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 0.85, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 0.6, "ref_max": 1.1 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["General Medicine"],
+        "acceptable_top2": ["General Medicine"],
+        "disallowed_primary": ["Orthopedics", "Dermatology"]
+      }
+    },
+    {
+      "id": "NOISE-01",
+      "name": "OCR-Noisy Layout Report",
+      "file": "text_reports/NOISE-01_ocr_wrapped_columns.txt",
+      "patient_context": {
+        "symptoms": ["Polyuria", "Thirst"],
+        "duration": "2 weeks",
+        "severity": 5,
+        "main_concern": "Lab check for elevated sugar"
+      },
+      "expected_biomarkers": [
+        { "name": "Fasting Blood Glucose", "canonical_v2": "glucose_fasting", "value": 162.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 70.0, "ref_max": 99.0 },
+        { "name": "Hemoglobin A1c", "canonical_v2": "hba1c", "value": 8.8, "unit": "%", "expected_flag": "HIGH", "ref_max": 5.7 },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 1.65, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 0.7, "ref_max": 1.3 },
+        { "name": "Blood Urea Nitrogen", "canonical_v2": "bun", "value": 28.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 7.0, "ref_max": 20.0 },
+        { "name": "eGFR", "canonical_v2": "egfr", "value": 49.0, "unit": "mL/min", "expected_flag": "LOW", "ref_min": 60.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Endocrinology", "Nephrology"],
+        "acceptable_top2": ["Endocrinology", "Nephrology"],
+        "disallowed_primary": ["Orthopedics"]
+      }
+    }
+  ],
+  "pdf_cases": [
+    {
+      "id": "PDF-01",
+      "name": "Sample Medical Report (sample_medical_report.pdf)",
+      "file": "pdf_reports/sample_medical_report.pdf",
+      "patient_context": {
+        "symptoms": ["Fatigue", "Frequent urination"],
+        "duration": "1 week",
+        "severity": 5,
+        "main_concern": "Elevated blood sugar and borderline lipids"
+      },
+      "expected_biomarkers_inventory": [
+        { "name": "White Blood Cell (WBC)", "canonical_v2": "wbc_count", "value": 7.4, "unit": "x10E3/uL", "expected_flag": "NORMAL", "ref_min": 4.5, "ref_max": 11.0 },
+        { "name": "Red Blood Cell (RBC)", "canonical_v2": "rbc_count", "value": 4.85, "unit": "x10E6/uL", "expected_flag": "NORMAL", "ref_min": 4.3, "ref_max": 5.9 },
+        { "name": "Hemoglobin", "canonical_v2": "hemoglobin", "value": 15.2, "unit": "g/dL", "expected_flag": "NORMAL", "ref_min": 13.5, "ref_max": 17.5 },
+        { "name": "Hematocrit", "canonical_v2": "hematocrit", "value": 45.1, "unit": "%", "expected_flag": "NORMAL", "ref_min": 41.0, "ref_max": 50.0 },
+        { "name": "Platelets", "canonical_v2": "platelet_count", "value": 142.0, "unit": "x10E3/uL", "expected_flag": "LOW", "ref_min": 150.0, "ref_max": 450.0 },
+        { "name": "Glucose, Fasting", "canonical_v2": "glucose_fasting", "value": 114.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_min": 70.0, "ref_max": 99.0 },
+        { "name": "BUN (Blood Urea Nitrogen)", "canonical_v2": "bun", "value": 16.0, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 7.0, "ref_max": 20.0 },
+        { "name": "Creatinine", "canonical_v2": "serum_creatinine", "value": 0.92, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 0.6, "ref_max": 1.3 },
+        { "name": "Sodium", "canonical_v2": null, "value": 139.0, "unit": "mEq/L", "expected_flag": "NORMAL", "ref_min": 135.0, "ref_max": 145.0 },
+        { "name": "Potassium", "canonical_v2": null, "value": 4.1, "unit": "mEq/L", "expected_flag": "NORMAL", "ref_min": 3.5, "ref_max": 5.2 },
+        { "name": "Chloride", "canonical_v2": null, "value": 102.0, "unit": "mEq/L", "expected_flag": "NORMAL", "ref_min": 96.0, "ref_max": 106.0 },
+        { "name": "Calcium", "canonical_v2": null, "value": 9.4, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 8.5, "ref_max": 10.5 },
+        { "name": "Cholesterol, Total", "canonical_v2": "total_cholesterol", "value": 224.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 200.0 },
+        { "name": "Triglycerides", "canonical_v2": "triglycerides", "value": 165.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 150.0 },
+        { "name": "HDL Cholesterol (Good)", "canonical_v2": "hdl_cholesterol", "value": 42.0, "unit": "mg/dL", "expected_flag": "NORMAL", "ref_min": 40.0 },
+        { "name": "LDL Cholesterol (Bad)", "canonical_v2": "ldl_cholesterol", "value": 149.0, "unit": "mg/dL", "expected_flag": "HIGH", "ref_max": 100.0 }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Cardiology", "Endocrinology", "General Medicine"],
+        "acceptable_top2": ["Cardiology", "Endocrinology", "General Medicine"],
+        "disallowed_primary": ["Orthopedics", "Dermatology"]
+      }
+    },
+    {
+      "id": "PDF-02",
+      "name": "VitaLens Test Report 02 Renal Focused PDF",
+      "file": "pdf_reports/VitaLens_Test_Report_02_Renal_Focused.pdf",
+      "patient_context": {
+        "symptoms": ["Fatigue", "Frequent urination"],
+        "duration": "Few days",
+        "severity": 5,
+        "main_concern": "Fatigue and frequent urination"
+      },
+      "expected_biomarkers_inventory": [
+        { "name": "Hemoglobin (Hb)", "canonical_v2": "hemoglobin", "value": 13.8, "unit": "g/dL", "expected_flag": "NORMAL" },
+        { "name": "White Blood Cell Count (WBC)", "canonical_v2": "wbc_count", "value": 9200.0, "unit": "/µL", "expected_flag": "NORMAL" },
+        { "name": "Red Blood Cell Count (RBC)", "canonical_v2": "rbc_count", "value": 4.72, "unit": "million/µL", "expected_flag": "NORMAL" },
+        { "name": "Platelet Count", "canonical_v2": "platelet_count", "value": 318000.0, "unit": "/µL", "expected_flag": "NORMAL" },
+        { "name": "Hematocrit (PCV)", "canonical_v2": "hematocrit", "value": 42.1, "unit": "%", "expected_flag": "NORMAL" },
+        { "name": "Fasting Blood Glucose", "canonical_v2": "glucose_fasting", "value": 96.0, "unit": "mg/dL", "expected_flag": "NORMAL" },
+        { "name": "Glycated Hemoglobin (HbA1c)", "canonical_v2": "hba1c", "value": 5.6, "unit": "%", "expected_flag": "NORMAL" },
+        { "name": "Total Cholesterol", "canonical_v2": "total_cholesterol", "value": 214.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "LDL Cholesterol", "canonical_v2": "ldl_cholesterol", "value": 142.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "HDL Cholesterol", "canonical_v2": "hdl_cholesterol", "value": 38.0, "unit": "mg/dL", "expected_flag": "LOW" },
+        { "name": "Triglycerides", "canonical_v2": "triglycerides", "value": 168.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 1.7, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "Blood Urea Nitrogen (BUN)", "canonical_v2": "bun", "value": 32.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "Estimated Glomerular Filtration Rate (eGFR)", "canonical_v2": "egfr", "value": 48.0, "unit": "mL/min/1", "expected_flag": "LOW" },
+        { "name": "Uric Acid, Serum", "canonical_v2": "uric_acid", "value": 8.6, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "Alanine Aminotransferase (ALT)", "canonical_v2": "alt_sgpt", "value": 28.0, "unit": "U/L", "expected_flag": "NORMAL" },
+        { "name": "Aspartate Aminotransferase (AST)", "canonical_v2": "ast_sgot", "value": 26.0, "unit": "U/L", "expected_flag": "NORMAL" },
+        { "name": "Bilirubin, Total", "canonical_v2": "total_bilirubin", "value": 1.0, "unit": "mg/dL", "expected_flag": "NORMAL" },
+        { "name": "Thyroid Stimulating Hormone (TSH)", "canonical_v2": "tsh", "value": 2.8, "unit": "µIU/mL", "expected_flag": "NORMAL" },
+        { "name": "Free T4", "canonical_v2": "free_t4", "value": 1.1, "unit": "ng/dL", "expected_flag": "NORMAL" },
+        { "name": "Ferritin", "canonical_v2": "ferritin", "value": 68.0, "unit": "ng/mL", "expected_flag": "NORMAL" },
+        { "name": "Iron", "canonical_v2": "iron", "value": 96.0, "unit": "µg/dL", "expected_flag": "NORMAL" },
+        { "name": "C-Reactive Protein (CRP)", "canonical_v2": "crp", "value": 4.2, "unit": "mg/L", "expected_flag": "NORMAL" },
+        { "name": "Erythrocyte Sedimentation Rate (ESR)", "canonical_v2": "esr", "value": 18.0, "unit": "mm/hr", "expected_flag": "NORMAL" }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Nephrology"],
+        "acceptable_top2": ["Nephrology", "Cardiology"],
+        "disallowed_primary": ["Cardiology", "Dermatology"]
+      }
+    },
+    {
+      "id": "PDF-03",
+      "name": "VitaLens Sample Lab Report (Rahul Sharma)",
+      "file": "pdf_reports/VitaLens_Sample_Lab_Report.pdf",
+      "patient_context": {
+        "symptoms": ["Fatigue", "Frequent urination"],
+        "duration": "2 weeks",
+        "severity": 6,
+        "main_concern": "Elevated fasting glucose and lipids"
+      },
+      "expected_biomarkers_inventory": [
+        { "name": "Hemoglobin (Hb)", "canonical_v2": "hemoglobin", "value": 13.4, "unit": "g/dL", "expected_flag": "NORMAL" },
+        { "name": "White Blood Cell Count (WBC)", "canonical_v2": "wbc_count", "value": 8700.0, "unit": "cells/mcL", "expected_flag": "NORMAL" },
+        { "name": "Red Blood Cell Count (RBC)", "canonical_v2": "rbc_count", "value": 4.62, "unit": "million/mcL", "expected_flag": "NORMAL" },
+        { "name": "Platelet Count", "canonical_v2": "platelet_count", "value": 235000.0, "unit": "cells/mcL", "expected_flag": "NORMAL" },
+        { "name": "Hematocrit (PCV)", "canonical_v2": "hematocrit", "value": 40.8, "unit": "%", "expected_flag": "NORMAL" },
+        { "name": "Fasting Blood Glucose", "canonical_v2": "glucose_fasting", "value": 142.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "Glycated Hemoglobin (HbA1c)", "canonical_v2": "hba1c", "value": 7.1, "unit": "%", "expected_flag": "HIGH" },
+        { "name": "Total Cholesterol", "canonical_v2": "total_cholesterol", "value": 228.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "LDL Cholesterol", "canonical_v2": "ldl_cholesterol", "value": 154.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "HDL Cholesterol", "canonical_v2": "hdl_cholesterol", "value": 42.0, "unit": "mg/dL", "expected_flag": "NORMAL" },
+        { "name": "Triglycerides", "canonical_v2": "triglycerides", "value": 176.0, "unit": "mg/dL", "expected_flag": "HIGH" },
+        { "name": "Serum Creatinine", "canonical_v2": "serum_creatinine", "value": 1.1, "unit": "mg/dL", "expected_flag": "NORMAL" },
+        { "name": "Blood Urea Nitrogen (BUN)", "canonical_v2": "bun", "value": 18.0, "unit": "mg/dL", "expected_flag": "NORMAL" },
+        { "name": "Estimated Glomerular Filtration Rate (eGFR)", "canonical_v2": "egfr", "value": 84.0, "unit": "mL/min/1", "expected_flag": "NORMAL" },
+        { "name": "Uric Acid, Serum", "canonical_v2": "uric_acid", "value": 6.8, "unit": "mg/dL", "expected_flag": "NORMAL" },
+        { "name": "Alanine Aminotransferase (ALT)", "canonical_v2": "alt_sgpt", "value": 46.0, "unit": "U/L", "expected_flag": "HIGH" },
+        { "name": "Aspartate Aminotransferase (AST)", "canonical_v2": "ast_sgot", "value": 31.0, "unit": "U/L", "expected_flag": "NORMAL" },
+        { "name": "Bilirubin, Total", "canonical_v2": "total_bilirubin", "value": 0.8, "unit": "mg/dL", "expected_flag": "NORMAL" },
+        { "name": "Thyroid Stimulating Hormone (TSH)", "canonical_v2": "tsh", "value": 3.2, "unit": "mIU/L", "expected_flag": "NORMAL" },
+        { "name": "Free T4", "canonical_v2": "free_t4", "value": 1.1, "unit": "ng/dL", "expected_flag": "NORMAL" }
+      ],
+      "expected_specialty": {
+        "acceptable_primary": ["Endocrinology", "Cardiology"],
+        "acceptable_top2": ["Endocrinology", "Cardiology", "General Medicine"],
+        "disallowed_primary": ["Orthopedics", "Dermatology"]
+      }
+    }
+  ]
+}

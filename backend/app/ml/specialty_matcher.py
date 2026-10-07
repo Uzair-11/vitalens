@@ -1,3 +1,4 @@
+import os
 import re
 from typing import List, Dict, Any, Optional, Tuple
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -62,15 +63,15 @@ def check_emergency(symptoms_text: str, abnormal_biomarkers: List[Dict[str, Any]
     for red_flag in EMERGENCY_SYMPTOMS:
         if red_flag in text_lower:
             return True, f"You reported experiencing '{red_flag}'. Please seek immediate emergency medical care (dial 911/112 or visit nearest emergency room) rather than waiting for an outpatient appointment."
-            
+
     critical_biomarkers = [
-        b for b in abnormal_biomarkers 
+        b for b in abnormal_biomarkers
         if str(b.get("flag", "")).upper().startswith("CRITICAL")
     ]
     if critical_biomarkers:
         names = ", ".join([b.get("test_name", "") for b in critical_biomarkers])
         return True, f"Your report shows critical biomarker values ({names}). We strongly advise immediate clinical evaluation at an urgent care or emergency facility."
-        
+
     return False, None
 
 def detect_emergency_red_flags(text: str) -> List[str]:
@@ -85,7 +86,8 @@ def recommend_specialty(
     abnormal_biomarkers: List[Dict[str, Any]],
     severity_score: int = 5,
     duration_days: int = 7,
-    tracer: Optional[Any] = None
+    tracer: Optional[Any] = None,
+    model_version: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Executes specialty recommendation:
@@ -95,10 +97,14 @@ def recommend_specialty(
     4. Optional Super Admin observability tracing.
     """
     all_symptoms = " ".join([primary_concern] + symptoms_list + [body_region])
-    
+
     # Step 1: Emergency Red-Flag Check
     is_emergency, emergency_msg = check_emergency(all_symptoms, abnormal_biomarkers)
-    
+
+    resolved_version = (model_version or os.getenv("VITALENS_MODEL_VERSION", "v1")).strip().lower()
+    pytorch_failed = False
+    failure_reason = None
+
     # Step 2: Try PyTorch Deep Learning Model Inference
     try:
         from app.ml.pytorch_specialty_predictor import predict_specialty_pytorch
@@ -109,14 +115,21 @@ def recommend_specialty(
             abnormal_biomarkers=abnormal_biomarkers,
             severity_score=severity_score,
             duration_days=duration_days,
-            return_trace_telemetry=(tracer is not None)
+            return_trace_telemetry=(tracer is not None),
+            model_version=model_version
         )
-        if pytorch_res is not None:
+        if pytorch_res is not None and "error" not in pytorch_res:
+            raw_ver = pytorch_res.get("model_version", resolved_version)
+            recorded_model_version = f"specialty-net-{raw_ver}.0.0" if not str(raw_ver).startswith("specialty-net") else raw_ver
+
             pytorch_res["is_emergency_flagged"] = is_emergency
             pytorch_res["emergency_message"] = emergency_msg
             pytorch_res["abnormal_biomarkers_considered"] = [b.get("test_name", "") for b in abnormal_biomarkers]
             pytorch_res["symptoms_considered"] = [primary_concern] + symptoms_list
-            
+            pytorch_res["fallback_used"] = False
+            pytorch_res["prediction_source"] = "ai_model"
+            pytorch_res["model_version"] = recorded_model_version
+
             if tracer is not None and "trace_telemetry" in pytorch_res:
                 telem = pytorch_res.pop("trace_telemetry")
                 tracer.record_step_5_canonical_feature_mapping(telem.get("mapping_table", []))
@@ -134,7 +147,7 @@ def recommend_specialty(
                 )
                 tracer.record_step_8_model_inference(
                     pytorch_res.get("model_used", "VitaLensSpecialtyNet"),
-                    "specialty-net-v1.0.0",
+                    recorded_model_version,
                     telem.get("input_feature_count", 298),
                     telem.get("inference_duration_ms", 0.0)
                 )
@@ -154,15 +167,67 @@ def recommend_specialty(
                 pytorch_res["trace_id"] = tracer.trace_id
 
             return pytorch_res
+        else:
+            pytorch_failed = True
+            failure_reason = pytorch_res.get("error") if isinstance(pytorch_res, dict) else "Predictor returned None"
     except Exception as e:
-        print(f"[!] PyTorch specialty predictor fallback: {e}")
+        pytorch_failed = True
+        failure_reason = str(e)
+        print(f"[!] PyTorch specialty predictor exception: {e}")
+
+    # Step 3: For V2 failures, return Safe Structured Default to General Medicine (No heuristic guessing)
+    if resolved_version == "v2" and pytorch_failed:
+        if is_emergency:
+            safe_rationale = (
+                f"CRITICAL MEDICAL ALERT: {emergency_msg} "
+                "AI specialty triage is temporarily unavailable, but your symptoms and/or lab values require immediate emergency care. "
+                "Please seek emergency medical attention or consult urgent primary care immediately."
+            )
+        else:
+            safe_rationale = (
+                "AI specialty triage is temporarily unavailable. "
+                "Based on your symptoms and findings, we recommend consulting a General Physician or Primary Care Doctor "
+                "for a comprehensive clinical evaluation. This is a suggestion to help guide your next step, not a diagnosis."
+            )
+        res = {
+            "recommended_specialty_name": "General Medicine",
+            "confidence_score": 0.0,
+            "rationale": safe_rationale,
+            "is_emergency_flagged": is_emergency,
+            "emergency_message": emergency_msg,
+            "abnormal_biomarkers_considered": [b.get("test_name", "") for b in abnormal_biomarkers],
+            "symptoms_considered": [primary_concern] + symptoms_list,
+            "model_used": "General Medicine Safe Default (Model Unavailable)",
+            "fallback_used": True,
+            "prediction_source": "primary_care_safe_default",
+            "model_version": None,
+        }
+        if tracer is not None:
+            tracer.model_name = None
+            tracer.model_version = None
+            tracer.status = "MODEL_UNAVAILABLE"
+            tracer.top_specialty = "General Medicine"
+            tracer.confidence_score = 0.0
+            tracer.error_step = "MODEL_INFERENCE_V2"
+            tracer.error_message = failure_reason or "V2 model inference unavailable"
+            tracer.record_step_10_final_decision(
+                model_top_class="None",
+                specialty_mapping="General Medicine",
+                final_specialty_name="General Medicine",
+                is_emergency=is_emergency,
+                emergency_message=emergency_msg,
+                fallback_used=True,
+                decision_status="MODEL_UNAVAILABLE"
+            )
+            res["trace_id"] = tracer.trace_id
+        return res
 
     # Step 3: Fallback Rule-based evaluation on abnormal biomarkers
     rule_matched_specialty = None
     rule_rationale_parts = []
-    
+
     abnormal_canonical = {b.get("canonical_name", "").lower(): b for b in abnormal_biomarkers}
-    
+
     for name, item in abnormal_canonical.items():
         flag = item.get("flag")
         if "cholesterol" in name or "ldl" in name or "triglycerides" in name:
@@ -185,15 +250,15 @@ def recommend_specialty(
     specialty_names = list(SPECIALTY_TAXONOMY.keys())
     corpus = [" ".join(SPECIALTY_TAXONOMY[spec]) for spec in specialty_names]
     corpus.append(all_symptoms)
-    
+
     vectorizer = TfidfVectorizer(stop_words='english')
     tfidf_matrix = vectorizer.fit_transform(corpus)
     similarities = cosine_similarity(tfidf_matrix[-1], tfidf_matrix[:-1])[0]
-    
+
     best_idx = similarities.argmax()
     best_sim_score = float(similarities[best_idx])
     semantic_specialty = specialty_names[best_idx]
-    
+
     if rule_matched_specialty and best_sim_score > 0.15 and semantic_specialty == rule_matched_specialty:
         final_specialty = rule_matched_specialty
         confidence = min(0.95, 0.70 + best_sim_score)
@@ -238,16 +303,21 @@ def recommend_specialty(
         "emergency_message": emergency_msg,
         "abnormal_biomarkers_considered": [b.get("test_name", "") for b in abnormal_biomarkers],
         "symptoms_considered": [primary_concern] + symptoms_list,
-        "model_used": "Heuristic Rule & TF-IDF Fallback"
+        "model_used": "Heuristic Rule & TF-IDF Fallback",
+        "fallback_used": True,
+        "prediction_source": "heuristic_rule_bank",
+        "model_version": None,
     }
     if tracer is not None:
+        tracer.model_version = None
         tracer.record_step_10_final_decision(
             rule_matched_specialty or semantic_specialty or "General Medicine",
             final_specialty,
             final_specialty,
             is_emergency,
             emergency_msg,
-            fallback_used=True
+            fallback_used=True,
+            decision_status="FALLBACK_RULE_BASED"
         )
         res["trace_id"] = tracer.trace_id
     return res

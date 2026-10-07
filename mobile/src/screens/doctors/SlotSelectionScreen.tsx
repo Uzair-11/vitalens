@@ -76,7 +76,17 @@ export const SlotSelectionScreen: React.FC<{ route: any; navigation: any }> = ({
         patient_notes: patientNotes.trim() || undefined,
       });
 
-      navigation.replace('BookingSuccess', { appointment: appt });
+      const enrichedAppointment: Appointment = {
+        ...appt,
+        doctor_name: appt.doctor_name || selectedDoctor?.full_name,
+        doctor_specialty: appt.doctor_specialty || selectedDoctor?.specialty_name,
+        doctor_clinic: appt.doctor_clinic || selectedDoctor?.clinic_name,
+        doctor_address: appt.doctor_address || selectedDoctor?.address,
+        doctor_photo: appt.doctor_photo || selectedDoctor?.profile_photo_url,
+        consultation_fee: appt.consultation_fee ?? selectedDoctor?.consultation_fee,
+      };
+
+      navigation.replace('BookingSuccess', { appointment: enrichedAppointment });
     } catch (err: any) {
       const msg = err.response?.data?.detail || 'Booking failed. This slot might be taken.';
       Alert.alert('Booking Error', msg);

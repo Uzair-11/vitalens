@@ -1,0 +1,29 @@
+PATIENT LABORATORY REPORT
+Name: Priya Nair    Age: 32    Sex: Female
+Report Date: 2026-10-04
+
+ANNUAL PREVENTIVE HEALTH CHECKUP
+
+COMPLETE BLOOD COUNT
+Hemoglobin: 13.5 g/dL (Reference: 12.0 - 16.0) NORMAL
+White Blood Cell Count: 6500 /uL (Reference: 4000 - 11000) NORMAL
+Red Blood Cell Count: 4.5 million/uL (Reference: 4.0 - 5.2) NORMAL
+Platelet Count: 280000 /uL (Reference: 150000 - 450000) NORMAL
+Hematocrit: 41.0 % (Reference: 36.0 - 46.0) NORMAL
+
+METABOLIC & RENAL
+Fasting Blood Glucose: 86 mg/dL (Reference: 70 - 99) NORMAL
+HbA1c: 5.2 % (Reference: 4.0 - 5.6) NORMAL
+Serum Creatinine: 0.85 mg/dL (Reference: 0.6 - 1.1) NORMAL
+Blood Urea Nitrogen: 13 mg/dL (Reference: 7 - 20) NORMAL
+
+LIPID PANEL
+Total Cholesterol: 175 mg/dL (Reference: < 200) NORMAL
+LDL Cholesterol: 92 mg/dL (Reference: < 100) NORMAL
+HDL Cholesterol: 55 mg/dL (Reference: > 40) NORMAL
+Triglycerides: 110 mg/dL (Reference: < 150) NORMAL
+
+LIVER & THYROID
+Alanine Aminotransferase (ALT): 22 U/L (Reference: 7 - 40) NORMAL
+Aspartate Aminotransferase (AST): 20 U/L (Reference: 10 - 40) NORMAL
+Thyroid Stimulating Hormone (TSH): 2.1 uIU/mL (Reference: 0.4 - 4.5) NORMAL

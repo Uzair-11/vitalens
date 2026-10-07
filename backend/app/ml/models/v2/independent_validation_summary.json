@@ -1,0 +1,226 @@
+{
+  "dataset_samples": 1000,
+  "top1_accuracy": 0.978,
+  "top2_accuracy": 0.997,
+  "top3_accuracy": 0.999,
+  "macro_f1": 0.9788,
+  "weighted_f1": 0.9781,
+  "calibration": {
+    "expected_calibration_error": 0.0548,
+    "brier_score": 0.0387
+  },
+  "per_specialty": {
+    "Cardiology": {
+      "precision": 1.0,
+      "recall": 0.9556,
+      "f1_score": 0.9773,
+      "support": 90.0
+    },
+    "Endocrinology": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 90.0
+    },
+    "Hematology": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 90.0
+    },
+    "Gastroenterology": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 90.0
+    },
+    "Nephrology": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 90.0
+    },
+    "Pulmonology": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 90.0
+    },
+    "Dermatology": {
+      "precision": 0.8925,
+      "recall": 0.9222,
+      "f1_score": 0.9071,
+      "support": 90.0
+    },
+    "Neurology": {
+      "precision": 0.9882,
+      "recall": 0.9333,
+      "f1_score": 0.96,
+      "support": 90.0
+    },
+    "Orthopedics": {
+      "precision": 0.9474,
+      "recall": 1.0,
+      "f1_score": 0.973,
+      "support": 90.0
+    },
+    "General Medicine": {
+      "precision": 0.9686,
+      "recall": 0.9737,
+      "f1_score": 0.9711,
+      "support": 190.0
+    }
+  },
+  "subsets": {
+    "ISOLATED": {
+      "count": 500,
+      "top1_acc": 0.996,
+      "top2_acc": 0.998,
+      "top3_acc": 1.0,
+      "macro_f1": 0.996
+    },
+    "MIXED": {
+      "count": 250,
+      "top1_acc": 0.964,
+      "top2_acc": 0.992,
+      "top3_acc": 0.996,
+      "macro_f1": 0.9641
+    },
+    "NORMAL_CONTROL": {
+      "count": 100,
+      "top1_acc": 1.0,
+      "top2_acc": 1.0,
+      "top3_acc": 1.0,
+      "macro_f1": 1.0
+    },
+    "DISCORDANT": {
+      "count": 150,
+      "top1_acc": 0.9267,
+      "top2_acc": 1.0,
+      "top3_acc": 1.0,
+      "macro_f1": 0.9277
+    }
+  },
+  "confusion_matrix": [
+    [
+      86,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      3,
+      0
+    ],
+    [
+      0,
+      90,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      90,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      90,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      90,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      90,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      83,
+      0,
+      2,
+      5
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5,
+      84,
+      0,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      90,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      185
+    ]
+  ]
+}

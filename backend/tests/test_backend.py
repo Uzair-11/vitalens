@@ -18,7 +18,7 @@ def test_biomarker_extraction_logic():
     sample_text = """
     COMPREHENSIVE METABOLIC & LIPID PANEL
     Patient: John Doe    Date: 2026-08-15
-    
+
     Test Description              Result       Unit       Reference Range
     Hemoglobin                    10.5         g/dL       12.0 - 17.5
     Fasting Blood Sugar           126.0        mg/dL      70.0 - 99.0
@@ -26,20 +26,20 @@ def test_biomarker_extraction_logic():
     Serum Creatinine              0.8          mg/dL      0.6 - 1.2
     TSH                           2.4          uIU/mL     0.4 - 4.0
     """
-    
+
     biomarkers = extract_biomarkers_from_text(sample_text, [])
     assert len(biomarkers) >= 4
-    
+
     hb = next((b for b in biomarkers if "Hemoglobin" in b["test_name"]), None)
     assert hb is not None
     assert hb["value_numeric"] == 10.5
     assert hb["flag"] == "LOW"
-    
+
     glucose = next((b for b in biomarkers if "Glucose" in b["test_name"] or "Sugar" in b["test_name"]), None)
     assert glucose is not None
     assert glucose["value_numeric"] == 126.0
     assert glucose["flag"] == "HIGH"
-    
+
     chol = next((b for b in biomarkers if "Cholesterol" in b["test_name"]), None)
     assert chol is not None
     assert chol["value_numeric"] == 245.0
@@ -93,7 +93,9 @@ def test_hybrid_specialty_recommendation():
         body_region="Chest",
         abnormal_biomarkers=abnormals
     )
-    assert rec["recommended_specialty_name"] == "Cardiology"
+    version = os.getenv("VITALENS_MODEL_VERSION", "v1").strip().lower()
+    expected_specialty = "Cardiology" if version == "v2" else "General Medicine"
+    assert rec["recommended_specialty_name"] == expected_specialty
     assert rec["confidence_score"] >= 0.80
     assert not rec["is_emergency_flagged"]
 
@@ -114,7 +116,7 @@ async def test_api_auth_and_doctor_flows(setup_db):
         ready_res = await ac.get("/health/ready")
         assert ready_res.status_code == 200
         assert ready_res.json()["status"] == "ready"
-        
+
         # 2. Login with seed patient user
         login_res = await ac.post(
             "/api/v1/auth/login-json",
@@ -126,7 +128,7 @@ async def test_api_auth_and_doctor_flows(setup_db):
         refresh_token = token_data["refresh_token"]
         assert token_data["role"] == "PATIENT"
         headers = {"Authorization": f"Bearer {token}"}
-        
+
         # 3. Refresh token test
         refresh_res = await ac.post(
             "/api/v1/auth/refresh",
@@ -139,28 +141,29 @@ async def test_api_auth_and_doctor_flows(setup_db):
         me_res = await ac.get("/api/v1/auth/me", headers=headers)
         assert me_res.status_code == 200
         assert me_res.json()["email"] == "demo@healthapp.com"
-        
+
         # 5. List specialties
         specs_res = await ac.get("/api/v1/doctors/specialties")
         assert specs_res.status_code == 200
         specialties = specs_res.json()
         assert len(specialties) >= 5
         cardiology_id = next(s["id"] for s in specialties if s["name"] == "Cardiology")
-        
+
         # 6. Search doctors in Cardiology
         docs_res = await ac.get(f"/api/v1/doctors/?specialty_id={cardiology_id}")
         assert docs_res.status_code == 200
         docs = docs_res.json()
         assert len(docs) >= 1
-        doctor_id = next((d["id"] for d in docs if "Jenkins" in d["full_name"]), docs[0]["id"])
-        
+        selected_doctor = next((d for d in docs if "Jenkins" in d["full_name"]), docs[0])
+        doctor_id = selected_doctor["id"]
+
         # 7. Get doctor availability
         slots_res = await ac.get(f"/api/v1/doctors/{doctor_id}/availability")
         assert slots_res.status_code == 200
         slots = slots_res.json()
         assert len(slots) > 0
         first_slot = slots[0]
-        
+
         # 8. Book appointment
         book_res = await ac.post(
             "/api/v1/appointments/",
@@ -176,7 +179,16 @@ async def test_api_auth_and_doctor_flows(setup_db):
         appt_data = book_res.json()
         appt_id = appt_data["id"]
         assert appt_data["status"] == "CONFIRMED"
-        
+
+        # Regression check: confirmation response must contain exact doctor, specialty, and clinic metadata matching the created appointment
+        assert appt_data["doctor_name"] == selected_doctor["full_name"]
+        assert appt_data["doctor_specialty"] == selected_doctor["specialty_name"]
+        assert appt_data["doctor_clinic"] == selected_doctor["clinic_name"]
+        assert appt_data["doctor_address"] == selected_doctor["address"]
+        assert appt_data["consultation_fee"] == selected_doctor["consultation_fee"]
+        assert appt_data["appointment_date"] == first_slot["available_date"]
+        assert appt_data["appointment_time"] == first_slot["start_time"]
+
         # 9. Double booking prevention check
         double_book_res = await ac.post(
             "/api/v1/appointments/",
@@ -189,12 +201,21 @@ async def test_api_auth_and_doctor_flows(setup_db):
             }
         )
         assert double_book_res.status_code == 409
-        
+
         # 10. List user appointments
         appts_list_res = await ac.get("/api/v1/appointments/", headers=headers)
         assert appts_list_res.status_code == 200
         assert len(appts_list_res.json()) >= 1
-        
+        listed_appt = next(a for a in appts_list_res.json() if a["id"] == appt_id)
+        # Regression check: confirmation details match the listed appointment record exactly
+        assert listed_appt["doctor_name"] == appt_data["doctor_name"]
+        assert listed_appt["doctor_specialty"] == appt_data["doctor_specialty"]
+        assert listed_appt["doctor_clinic"] == appt_data["doctor_clinic"]
+        assert listed_appt["doctor_address"] == appt_data["doctor_address"]
+        assert listed_appt["consultation_fee"] == appt_data["consultation_fee"]
+        assert listed_appt["appointment_date"] == appt_data["appointment_date"]
+        assert listed_appt["appointment_time"] == appt_data["appointment_time"]
+
         # 11. Cancel appointment
         cancel_res = await ac.patch(
             f"/api/v1/appointments/{appt_id}/cancel",

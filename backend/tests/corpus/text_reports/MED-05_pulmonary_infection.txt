@@ -1,0 +1,16 @@
+PATIENT LABORATORY REPORT
+Name: Robert Evans    Age: 63    Sex: Male
+Report Date: 2026-10-04
+
+INFLAMMATORY MARKERS
+C-Reactive Protein (CRP): 48.0 mg/L (Reference: 0.0 - 5.0) HIGH
+Erythrocyte Sedimentation Rate (ESR): 62 mm/hr (Reference: 0 - 20) HIGH
+
+COMPLETE BLOOD COUNT
+White Blood Cell Count: 16800 /uL (Reference: 4000 - 11000) HIGH
+Hemoglobin: 13.9 g/dL (Reference: 13.0 - 17.5) NORMAL
+Platelet Count: 380000 /uL (Reference: 150000 - 450000) NORMAL
+
+METABOLIC
+Fasting Blood Glucose: 98 mg/dL (Reference: 70 - 99) NORMAL
+Serum Creatinine: 1.1 mg/dL (Reference: 0.7 - 1.3) NORMAL

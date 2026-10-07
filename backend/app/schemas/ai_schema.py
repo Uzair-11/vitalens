@@ -39,6 +39,9 @@ class SpecialtyRecommendationResponse(BaseModel):
     abnormal_biomarkers_considered: List[str] = []
     symptoms_considered: List[str] = []
     trace_id: Optional[str] = None
+    fallback_used: bool = False
+    prediction_source: str = "ai_model"
+    model_version: Optional[str] = None
 
 class ReportQARequest(BaseModel):
     report_id: Optional[str] = None
